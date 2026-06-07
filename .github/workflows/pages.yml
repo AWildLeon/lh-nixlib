@@ -47,7 +47,7 @@ jobs:
           cp -rL --no-preserve=mode,ownership result public
           echo "nixlib.onlh.de" > public/CNAME
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: public
 
