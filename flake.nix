@@ -25,9 +25,12 @@
     flake-parts.lib.mkFlake { inherit inputs; } (
       {
         self,
+        lib,
         ...
       }:
       {
+        flake.lib = import ./lib { inherit lib; };
+
         perSystem =
           {
             lib,
@@ -41,6 +44,7 @@
             _module.args.pkgsUnstable = import self.inputs.nixos-unstable {
               inherit system;
             };
+            _module.args.lh.lib = import ./lib { inherit lib; };
           };
 
         imports = [
