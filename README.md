@@ -11,4 +11,11 @@ A lot of it is wrappers around nixpkgs under my own `lh.*` namespace. The idea i
 No support. Issues will probably be ignored unless they personally bug me. If you want something fixed, open a PR.
 
 Also, I use AI in here. There will be dragons.
-Dont expect anything in here to be stable. I'll do as a please.
+Dont expect anything in here to be stable. I'll do as I please.
+
+## License
+This repository is licensed under the [MIT License](LICENSE).
+> [!Note]
+> MIT license does not apply to the packages built by this repository, merely to the files in this repository (the Nix expressions, build scripts, NixOS modules, etc.).
+It also might not apply to patches included in this repository, which may be derivative works of the packages to which they apply.
+The aforementioned artifacts are all covered by the licenses of the respective packages.
