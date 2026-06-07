@@ -7,9 +7,7 @@ pkgsUnstable.traefik.overrideAttrs (oldAttrs: {
   ];
 
   meta = (oldAttrs.meta or { }) // {
-    description =
-      (oldAttrs.meta.description or "Traefik")
-      + " (patched by lh-nixlib: sockets.patch)";
+    description = (oldAttrs.meta.description or "Traefik") + " (patched by lh-nixlib: sockets.patch)";
     maintainers = [ maintainers.awildleon ];
   };
 })
