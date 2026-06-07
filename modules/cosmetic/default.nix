@@ -1,3 +1,3 @@
 {
-  imports = [ ];
+  imports = [ ./motd-and-issue.nix ];
 }
