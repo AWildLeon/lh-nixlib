@@ -1,3 +1,6 @@
 {
-  imports = [ ./fhs-compat.nix ];
+  imports = [
+    ./fhs-compat.nix
+    ./serialtty.nix
+  ];
 }
