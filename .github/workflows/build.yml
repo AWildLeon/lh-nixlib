@@ -29,6 +29,10 @@ jobs:
         with:
           name: awildleon-nixlib
           authToken: ${{ secrets.CACHIX }}
+          # Don't auto-push the whole store (that would include build-time
+          # deps like the go-modules vendor drv). We push only what we want
+          # below.
+          skipPush: true
 
       - name: Build allowed packages for ${{ matrix.system }}
         env:
@@ -36,9 +40,19 @@ jobs:
           PACKAGES: |
             traefik
         run: |
+          : > paths.txt
           echo "$PACKAGES" | while read -r pkg; do
             [ -z "$pkg" ] && continue
             echo "::group::Building $pkg"
-            nix build --print-build-logs ".#packages.${{ matrix.system }}.$pkg"
+            nix build --print-build-logs --print-out-paths \
+              ".#packages.${{ matrix.system }}.$pkg" >> paths.txt
             echo "::endgroup::"
           done
+
+      - name: Push built packages to Cachix
+        if: github.event_name != 'pull_request'
+        run: |
+          # Pushes only the listed outputs and their runtime closure.
+          # Build-time-only deps (e.g. go-modules) are not runtime
+          # references and stay out of the cache.
+          cachix push awildleon-nixlib < paths.txt
