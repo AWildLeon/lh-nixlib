@@ -1,4 +1,5 @@
 [![Build and push to Cachix](https://github.com/AWildLeon/lh-nixlib/actions/workflows/build.yml/badge.svg)](https://github.com/AWildLeon/lh-nixlib/actions/workflows/build.yml)
+[![Deploy options search to GitHub Pages](https://github.com/AWildLeon/lh-nixlib/actions/workflows/pages.yml/badge.svg)](https://github.com/AWildLeon/lh-nixlib/actions/workflows/pages.yml)
 
 # lh-nixlib
 
@@ -9,6 +10,8 @@ My main flake contains a lot of internal tooling and infrastructure-specific stu
 A lot of it is wrappers around nixpkgs under my own `lh.*` namespace. The idea is that you can import it and nothing breaks, in theory. In practice, no guarantees.
 
 > Work in progress, stuff is added gradually.
+
+Options: https://nixlib.onlh.de
 
 ## Support
 
