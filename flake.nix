@@ -18,6 +18,11 @@
       url = "github:chayleaf/notnft";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -49,6 +54,9 @@
 
         imports = [
           ./packages/part.nix
+          ./parts/nix-develop.nix
+          ./parts/treefmt.nix
+          inputs.treefmt-nix.flakeModule
         ];
         systems = [
           # Dont beg me to support macOS, I wont. fork this and add it yourself if you want it. Any PR adding macOS support will be closed without comment.
