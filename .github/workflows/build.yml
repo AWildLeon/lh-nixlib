@@ -39,6 +39,7 @@ jobs:
           # Packages to build and push. One per line.
           PACKAGES: |
             traefik
+            glance
         run: |
           : > paths.txt
           echo "$PACKAGES" | while read -r pkg; do

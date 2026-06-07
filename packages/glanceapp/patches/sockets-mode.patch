@@ -1,0 +1,279 @@
+diff --git a/internal/glance/config.go b/internal/glance/config.go
+index fad9ca5..1202b7a 100644
+--- a/internal/glance/config.go
++++ b/internal/glance/config.go
+@@ -11,6 +11,7 @@ import (
+ 	"os"
+ 	"path/filepath"
+ 	"regexp"
++	"strconv"
+ 	"strings"
+ 	"sync"
+ 	"time"
+@@ -32,6 +33,7 @@ type config struct {
+ 		Host       string `yaml:"host"`
+ 		Port       uint16 `yaml:"port"`
+ 		SocketPath string `yaml:"socket-path"`
++		SocketMode string `yaml:"socket-mode"`
+ 		Proxied    bool   `yaml:"proxied"`
+ 		AssetsPath string `yaml:"assets-path"`
+ 		BaseURL    string `yaml:"base-url"`
+@@ -496,6 +498,18 @@ func isConfigStateValid(config *config) error {
+ 		return fmt.Errorf("must specify either socket-path or host:port for server")
+ 	}
+ 
++	// Validate socket-mode parameter
++	if config.Server.SocketMode != "" {
++		if !hasSocketPath {
++			return fmt.Errorf("socket-mode can only be specified when using socket-path")
++		}
++		
++		// Parse and validate the socket mode as octal permissions
++		if _, err := strconv.ParseUint(config.Server.SocketMode, 8, 32); err != nil {
++			return fmt.Errorf("invalid socket-mode '%s': must be valid octal permissions (e.g., '0666', '666')", config.Server.SocketMode)
++		}
++	}
++
+ 	for i := range config.Pages {
+ 		page := &config.Pages[i]
+ 
+diff --git a/internal/glance/config_socket_test.go b/internal/glance/config_socket_test.go
+new file mode 100644
+index 0000000..6cce440
+--- /dev/null
++++ b/internal/glance/config_socket_test.go
+@@ -0,0 +1,210 @@
++package glance
++
++import (
++	"io/fs"
++	"os"
++	"path/filepath"
++	"testing"
++	"time"
++)
++
++func TestSocketModeValidation(t *testing.T) {
++	tests := []struct {
++		name        string
++		config      config
++		expectError bool
++		errorMsg    string
++	}{
++		{
++			name: "valid socket mode with socket path",
++			config: func() config {
++				c := config{Pages: []page{{Title: "Test", Columns: []struct {
++					Size    string  `yaml:"size"`
++					Widgets widgets `yaml:"widgets"`
++				}{{Size: "full"}}}}}
++				c.Server.SocketPath = "/tmp/test.sock"
++				c.Server.SocketMode = "0666"
++				return c
++			}(),
++			expectError: false,
++		},
++		{
++			name: "socket mode without socket path should fail",
++			config: func() config {
++				c := config{Pages: []page{{Title: "Test"}}}
++				c.Server.Host = "localhost"
++				c.Server.Port = 8080
++				c.Server.SocketMode = "0666"
++				return c
++			}(),
++			expectError: true,
++			errorMsg:    "socket-mode can only be specified when using socket-path",
++		},
++		{
++			name: "invalid socket mode should fail",
++			config: func() config {
++				c := config{Pages: []page{{Title: "Test"}}}
++				c.Server.SocketPath = "/tmp/test.sock"
++				c.Server.SocketMode = "999"
++				return c
++			}(),
++			expectError: true,
++			errorMsg:    "invalid socket-mode '999': must be valid octal permissions (e.g., '0666', '666')",
++		},
++		{
++			name: "non-numeric socket mode should fail",
++			config: func() config {
++				c := config{Pages: []page{{Title: "Test"}}}
++				c.Server.SocketPath = "/tmp/test.sock"
++				c.Server.SocketMode = "rwxr--r--"
++				return c
++			}(),
++			expectError: true,
++			errorMsg:    "invalid socket-mode 'rwxr--r--': must be valid octal permissions (e.g., '0666', '666')",
++		},
++		{
++			name: "valid three-digit socket mode",
++			config: func() config {
++				c := config{Pages: []page{{Title: "Test", Columns: []struct {
++					Size    string  `yaml:"size"`
++					Widgets widgets `yaml:"widgets"`
++				}{{Size: "full"}}}}}
++				c.Server.SocketPath = "/tmp/test.sock"
++				c.Server.SocketMode = "666"
++				return c
++			}(),
++			expectError: false,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			err := isConfigStateValid(&tt.config)
++			if tt.expectError {
++				if err == nil {
++					t.Errorf("expected error but got none")
++				} else if tt.errorMsg != "" && err.Error() != tt.errorMsg {
++					t.Errorf("expected error message '%s' but got '%s'", tt.errorMsg, err.Error())
++				}
++			} else {
++				if err != nil {
++					t.Errorf("expected no error but got: %v", err)
++				}
++			}
++		})
++	}
++}
++
++func TestSocketCreationWithMode(t *testing.T) {
++	// Create a temporary directory for test sockets
++	tempDir, err := os.MkdirTemp("", "glance_socket_test")
++	if err != nil {
++		t.Fatalf("Failed to create temp dir: %v", err)
++	}
++	defer os.RemoveAll(tempDir)
++
++	socketPath := filepath.Join(tempDir, "test.sock")
++
++	// Create a test application with socket configuration
++	app := &application{
++		CreatedAt: time.Now(),
++		Config:    config{},
++	}
++	app.Config.Server.SocketPath = socketPath
++	app.Config.Server.SocketMode = "0644"
++
++	// Test socket creation
++	start, stop := app.server()
++
++	// Start the server in a goroutine
++	done := make(chan error, 1)
++	go func() {
++		done <- start()
++	}()
++
++	// Give the server a moment to start
++	time.Sleep(100 * time.Millisecond)
++
++	// Check if socket was created
++	if _, err := os.Stat(socketPath); os.IsNotExist(err) {
++		t.Fatalf("Socket file was not created")
++	}
++
++	// Check socket permissions
++	info, err := os.Stat(socketPath)
++	if err != nil {
++		t.Fatalf("Failed to stat socket file: %v", err)
++	}
++
++	expectedMode := fs.FileMode(0644)
++	actualMode := info.Mode() & fs.ModePerm
++	if actualMode != expectedMode {
++		t.Errorf("Expected socket permissions %o, but got %o", expectedMode, actualMode)
++	}
++
++	// Stop the server
++	if err := stop(); err != nil {
++		t.Errorf("Failed to stop server: %v", err)
++	}
++
++	// Wait for server to stop
++	select {
++	case err := <-done:
++		if err != nil && err.Error() != "http: Server closed" {
++			t.Errorf("Server stopped with unexpected error: %v", err)
++		}
++	case <-time.After(5 * time.Second):
++		t.Error("Server did not stop within timeout")
++	}
++}
++
++func TestSocketCreationWithoutMode(t *testing.T) {
++	// Create a temporary directory for test sockets
++	tempDir, err := os.MkdirTemp("", "glance_socket_test")
++	if err != nil {
++		t.Fatalf("Failed to create temp dir: %v", err)
++	}
++	defer os.RemoveAll(tempDir)
++
++	socketPath := filepath.Join(tempDir, "test.sock")
++
++	// Create a test application with socket configuration but no mode
++	app := &application{
++		CreatedAt: time.Now(),
++		Config:    config{},
++	}
++	app.Config.Server.SocketPath = socketPath
++	// SocketMode is empty, should use default permissions
++
++	// Test socket creation
++	start, stop := app.server()
++
++	// Start the server in a goroutine
++	done := make(chan error, 1)
++	go func() {
++		done <- start()
++	}()
++
++	// Give the server a moment to start
++	time.Sleep(100 * time.Millisecond)
++
++	// Check if socket was created
++	if _, err := os.Stat(socketPath); os.IsNotExist(err) {
++		t.Fatalf("Socket file was not created")
++	}
++
++	// Stop the server
++	if err := stop(); err != nil {
++		t.Errorf("Failed to stop server: %v", err)
++	}
++
++	// Wait for server to stop
++	select {
++	case err := <-done:
++		if err != nil && err.Error() != "http: Server closed" {
++			t.Errorf("Server stopped with unexpected error: %v", err)
++		}
++	case <-time.After(5 * time.Second):
++		t.Error("Server did not stop within timeout")
++	}
++}
+\ No newline at end of file
+diff --git a/internal/glance/glance.go b/internal/glance/glance.go
+index 67eefb8..db25afb 100644
+--- a/internal/glance/glance.go
++++ b/internal/glance/glance.go
+@@ -510,6 +510,18 @@ func (a *application) server() (func() error, func() error) {
+ 				return fmt.Errorf("failed to listen on unix socket: %w", err)
+ 			}
+ 			
++			// Set socket file permissions if socket-mode is specified
++			if a.Config.Server.SocketMode != "" {
++				mode, err := strconv.ParseUint(a.Config.Server.SocketMode, 8, 32)
++				if err != nil {
++					return fmt.Errorf("failed to parse socket-mode: %w", err)
++				}
++				
++				if err := os.Chmod(a.Config.Server.SocketPath, os.FileMode(mode)); err != nil {
++					return fmt.Errorf("failed to set socket permissions: %w", err)
++				}
++			}
++			
+ 			log.Printf("Starting server on unix socket %s (base-url: \"%s\", assets-path: \"%s\")\n",
+ 				a.Config.Server.SocketPath,
+ 				a.Config.Server.BaseURL,

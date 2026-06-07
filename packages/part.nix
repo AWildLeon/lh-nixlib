@@ -4,8 +4,9 @@ let
 in
 {
   perSystem =
-    { pkgsUnstable, ... }:
+    { pkgs, pkgsUnstable, ... }:
     {
       packages.traefik = import ./traefik/package.nix { inherit pkgsUnstable maintainers; };
+      packages.glance = import ./glanceapp/package.nix { inherit pkgs maintainers; };
     };
 }
