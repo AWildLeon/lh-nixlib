@@ -1,5 +1,7 @@
-# lh-nixlib
 [![Build and push to Cachix](https://github.com/AWildLeon/lh-nixlib/actions/workflows/build.yml/badge.svg)](https://github.com/AWildLeon/lh-nixlib/actions/workflows/build.yml)
+
+# lh-nixlib
+
 Public, reusable NixOS modules, libraries and tooling extracted from my personal homelab flake.
 
 My main flake contains a lot of internal tooling and infrastructure-specific stuff like host configs, network topology and internal services that I don't want to share publicly for privacy reasons. This repo is a public subset: things I'm happy to share with friends or anyone who finds it useful.
