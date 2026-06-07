@@ -44,9 +44,10 @@
           };
 
         imports = [
-
+          ./packages/part.nix
         ];
         systems = [
+          # Dont beg me to support macOS, I wont. fork this and add it yourself if you want it. Any PR adding macOS support will be closed without comment.
           "x86_64-linux"
           "aarch64-linux"
         ];

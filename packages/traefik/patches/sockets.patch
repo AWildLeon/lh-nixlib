@@ -1,0 +1,158 @@
+diff --git a/integration/simple_test.go b/integration/simple_test.go
+index 675e21c3d..a2aba040d 100644
+--- a/integration/simple_test.go
++++ b/integration/simple_test.go
+@@ -27,6 +27,8 @@ import (
+ 	"github.com/traefik/traefik/v3/integration/try"
+ 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+ 	"golang.org/x/crypto/ocsp"
++	"golang.org/x/net/http2"
++	"golang.org/x/net/http2/h2c"
+ )
+ 
+ // SimpleSuite tests suite.
+@@ -1922,3 +1924,57 @@ func (s *SimpleSuite) TestSanitizePathSyntaxV2() {
+ 		}
+ 	}
+ }
++
++func (s *SimpleSuite) TestUnixSocket() {
++	server := http.Server{
++		Handler: http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
++			res.WriteHeader(200)
++		}),
++	}
++	unixListener, err := net.Listen("unix", "/tmp/test.sock")
++	require.NoError(s.T(), err)
++	go server.Serve(unixListener)
++	defer os.Remove("/tmp/test.sock")
++
++	file := s.adaptFile("fixtures/file/simple-hosts.toml", struct {
++		Server string
++	}{Server: "unix+http:/tmp/test.sock"})
++	defer os.Remove(file)
++
++	s.traefikCmd(withConfigFile(file))
++
++	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
++	req.Host = "test.localhost"
++	require.NoError(s.T(), err)
++	err = try.Request(req, 1*time.Second, try.StatusCodeIs(http.StatusOK))
++	if err != nil {
++		s.T().Fatalf("Error while testing http service on unix socket: %v", err)
++	}
++}
++
++func (s *SimpleSuite) TestH2CSocket() {
++	server := http.Server{
++		Handler: h2c.NewHandler(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
++			res.WriteHeader(200)
++		}), &http2.Server{}),
++	}
++	unixListener, err := net.Listen("unix", "/tmp/test2.sock")
++	require.NoError(s.T(), err)
++	go server.Serve(unixListener)
++	defer os.Remove("/tmp/test2.sock")
++
++	file := s.adaptFile("fixtures/file/simple-hosts.toml", struct {
++		Server string
++	}{Server: "unix+h2c:/tmp/test2.sock"})
++	defer os.Remove(file)
++
++	s.traefikCmd(withConfigFile(file))
++
++	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
++	req.Host = "test.localhost"
++	require.NoError(s.T(), err)
++	err = try.Request(req, 1*time.Second, try.StatusCodeIs(http.StatusOK))
++	if err != nil {
++		s.T().Fatalf("Error while testing http service on unix socket: %v", err)
++	}
++}
+diff --git a/pkg/server/service/service.go b/pkg/server/service/service.go
+index 6967f6e7b..a46bfeb6e 100644
+--- a/pkg/server/service/service.go
++++ b/pkg/server/service/service.go
+@@ -369,6 +369,12 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
+ 			return nil, fmt.Errorf("error parsing server URL %s: %w", server.URL, err)
+ 		}
+ 
++		// Handle Unix socket URLs
++		if strings.HasPrefix(target.Scheme, "unix+") {
++			target.Host = target.Path
++			target.Path = ""
++		}
++
+ 		logger.Debug().Int(logs.ServerIndex, i).Str("URL", server.URL).
+ 			Msg("Creating server")
+ 
+diff --git a/pkg/server/service/smart_roundtripper.go b/pkg/server/service/smart_roundtripper.go
+index a1d7b3f1a..d18b89792 100644
+--- a/pkg/server/service/smart_roundtripper.go
++++ b/pkg/server/service/smart_roundtripper.go
+@@ -1,6 +1,7 @@
+ package service
+ 
+ import (
++	"context"
+ 	"crypto/tls"
+ 	"net"
+ 	"net/http"
+@@ -20,6 +21,15 @@ func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, erro
+ 	return t.Transport.RoundTrip(req)
+ }
+ 
++type unixTransport struct {
++	http.Transport
++}
++
++func (t *unixTransport) RoundTrip(req *http.Request) (*http.Response, error) {
++	req.URL.Scheme = req.URL.Scheme[len("unix+"):]
++	return t.Transport.RoundTrip(req)
++}
++
+ func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic.ForwardingTimeouts) (*smartRoundTripper, error) {
+ 	transportHTTP1 := transport.Clone()
+ 
+@@ -49,6 +59,41 @@ func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic
+ 
+ 	transport.RegisterProtocol("h2c", transportH2C)
+ 
++	// Unix socket support for HTTP/1
++	dialer := &net.Dialer{
++		Timeout:   30 * time.Second,
++		KeepAlive: 30 * time.Second,
++	}
++
++	transport.RegisterProtocol("unix+http", &unixTransport{
++		Transport: http.Transport{
++			MaxIdleConnsPerHost:   transport.MaxIdleConnsPerHost,
++			IdleConnTimeout:       90 * time.Second,
++			ExpectContinueTimeout: 1 * time.Second,
++			DialContext: func(ctx context.Context, netw, addr string) (net.Conn, error) {
++				host, _, err := net.SplitHostPort(addr)
++				if err != nil {
++					return nil, err
++				}
++				return dialer.DialContext(ctx, "unix", host)
++			},
++		},
++	})
++
++	// Unix socket support for HTTP/2 (H2C)
++	transport.RegisterProtocol("unix+h2c", &h2cTransportWrapper{
++		Transport: &http2.Transport{
++			DialTLS: func(netw, addr string, cfg *tls.Config) (net.Conn, error) {
++				host, _, err := net.SplitHostPort(addr)
++				if err != nil {
++					return nil, err
++				}
++				return net.Dial("unix", host)
++			},
++			AllowHTTP: true,
++		},
++	})
++
+ 	return &smartRoundTripper{
+ 		http2: transport,
+ 		http:  transportHTTP1,
