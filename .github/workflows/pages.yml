@@ -1,0 +1,52 @@
+name: Deploy options search to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Allow one concurrent deployment, cancelling in-progress runs.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Build options search
+        run: |
+          nix build --print-build-logs \
+            ".#packages.x86_64-linux.options-search"
+
+      - name: Prepare site artifact
+        run: |
+          # mkSearch produces a read-only store path; copy into a writable dir.
+          cp -rL --no-preserve=mode,ownership result public
+          echo "nixlib.onlh.de" > public/CNAME
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

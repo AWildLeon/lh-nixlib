@@ -53,8 +53,10 @@
           };
 
         imports = [
+          ./modules/part.nix
           ./packages/part.nix
           ./parts/nix-develop.nix
+          ./parts/options-search.nix
           ./parts/treefmt.nix
           inputs.treefmt-nix.flakeModule
         ];
