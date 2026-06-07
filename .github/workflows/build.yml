@@ -1,9 +1,20 @@
 name: Build and push to Cachix
 
+# Only run when something that affects the built packages changes:
+# the package definitions, the lib/maintainers they reference, the
+# flake inputs/lock, or this workflow itself.
 on:
   push:
     branches: [main]
+    paths: &paths
+      - packages/**
+      - lib/**
+      - maintainers/**
+      - flake.nix
+      - flake.lock
+      - .github/workflows/build.yml
   pull_request:
+    paths: *paths
   workflow_dispatch:
 
 jobs:

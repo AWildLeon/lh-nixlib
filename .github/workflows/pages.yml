@@ -1,8 +1,18 @@
 name: Deploy options search to GitHub Pages
 
+# The options search is generated from the NixOS modules, so only
+# rebuild when the modules, the lib they use, the search part, or the
+# flake inputs/lock change (plus this workflow itself).
 on:
   push:
     branches: [main]
+    paths:
+      - modules/**
+      - lib/**
+      - parts/options-search.nix
+      - flake.nix
+      - flake.lock
+      - .github/workflows/pages.yml
   workflow_dispatch:
 
 # Allow one concurrent deployment, cancelling in-progress runs.
