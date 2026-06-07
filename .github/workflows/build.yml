@@ -40,6 +40,8 @@ jobs:
           PACKAGES: |
             traefik
             glance
+            dashboard-icons
+            selfhst-icons
         run: |
           : > paths.txt
           echo "$PACKAGES" | while read -r pkg; do
