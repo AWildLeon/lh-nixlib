@@ -1,3 +1,3 @@
 {
-  imports = [ ];
+  imports = [ ./qemu/guestagent.nix ];
 }

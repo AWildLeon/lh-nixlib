@@ -1,0 +1,33 @@
+{ config, lib, ... }:
+
+with lib;
+
+let
+  cfg = config.lh.networking.staticInterfaceNames;
+in
+{
+  options.lh.networking.staticInterfaceNames = {
+    interfaces = mkOption {
+      type = types.attrsOf types.str;
+      default = { };
+      example = {
+        "aa:bb:cc:dd:ee:ff" = "wan";
+        "11:22:33:44:55:66" = "lan1";
+        "77:88:99:aa:bb:cc" = "lan2";
+      };
+      description = ''
+        Mapping of MAC addresses to interface names.
+        The key is the MAC address and the value is the desired interface name.
+      '';
+    };
+  };
+
+  config = mkIf (cfg.interfaces != { }) {
+    services.udev.extraRules = concatStringsSep "\n" (
+      mapAttrsToList (
+        mac: name:
+        ''SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="${mac}", NAME="${name}"''
+      ) cfg.interfaces
+    );
+  };
+}
