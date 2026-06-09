@@ -17,6 +17,9 @@ on:
     paths: *paths
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     strategy:
