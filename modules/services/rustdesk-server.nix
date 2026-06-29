@@ -14,6 +14,7 @@ in
       type = lib.types.listOf lib.types.str;
       description = "List of domain names or IP addresses for the RustDesk server endpoints.";
       default = throw "You must specify at least one endpoint for the RustDesk server.";
+      defaultText = lib.literalMD "Required — you must specify at least one endpoint.";
     };
   };
 

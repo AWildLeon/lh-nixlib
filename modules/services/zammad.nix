@@ -98,6 +98,7 @@ in
     secretKeyBaseFile = lib.mkOption {
       type = lib.types.str;
       default = throw "You must specify a path to a file containing the secret_key_base for Zammad";
+      defaultText = lib.literalMD "Required — path to a file containing the secret_key_base.";
       description = "Path to a file containing the secret_key_base for Zammad";
       example = "/var/lib/zammad/.secret_key_base";
     };

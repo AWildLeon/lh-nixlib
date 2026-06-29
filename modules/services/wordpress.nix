@@ -10,6 +10,7 @@ in
       type = lib.types.attrs;
       description = "WordPress sites configuration";
       default = throw "You must define at least one WordPress site";
+      defaultText = lib.literalMD "Required — you must define at least one WordPress site.";
     };
   };
   config = lib.mkIf cfg.enable {
