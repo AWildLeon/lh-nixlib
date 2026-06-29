@@ -18,7 +18,7 @@
             self.nixosModule.default
           ];
 
-          urlPrefix = "https://nixlib.onlh.de/";
+          urlPrefix = "https://github.com/AWildLeon/lh-nixlib/blob/main/";
 
           baseHref = "/";
 
