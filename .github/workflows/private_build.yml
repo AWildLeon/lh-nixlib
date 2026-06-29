@@ -76,7 +76,29 @@ jobs:
           # Pushes the listed outputs and their runtime closure.
           # Build-time-only deps (e.g. go-modules) are not runtime
           # references and stay out of the cache.
+          failed=0
           while read -r path; do
             [ -z "$path" ] && continue
-            attic push ${{ secrets.ATTIC_CACHE }} "$path"
+            delay=5
+            pushed=0
+            for attempt in 1 2 3 4 5; do
+              if attic push ${{ secrets.ATTIC_CACHE }} "$path"; then
+                pushed=1
+                break
+              fi
+              if [ "$attempt" -eq 5 ]; then
+                break
+              fi
+              echo "Push of $path failed (attempt $attempt), retrying in ${delay}s..."
+              sleep "$delay"
+              delay=$((delay * 2))
+            done
+            if [ "$pushed" -ne 1 ]; then
+              echo "::warning::Failed to push $path after 5 attempts, continuing"
+              failed=$((failed + 1))
+            fi
           done < paths.txt
+          if [ "$failed" -gt 0 ]; then
+            echo "::error::$failed path(s) failed to push"
+            exit 1
+          fi
