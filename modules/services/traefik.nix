@@ -136,6 +136,17 @@ in
           Each entry point should be defined as an attribute set with the necessary configuration.
         '';
       };
+
+      serversTransport = mkOption {
+        inherit (TraefikFormat) type;
+        default = { };
+        description = ''
+          Additional `serversTransport` settings, merged over the built-in
+          defaults (which set `insecureSkipVerify = true`). Use this to extend
+          or override how Traefik connects to backend servers, e.g. setting
+          `rootCAs`, `maxIdleConnsPerHost`, or disabling `insecureSkipVerify`.
+        '';
+      };
     };
   };
 
@@ -223,9 +234,9 @@ in
 
               certificatesResolvers = mkIf (cfg.cert_resolvers != { }) cfg.cert_resolvers;
 
-              serversTransport = {
+              serversTransport = recursiveUpdate {
                 insecureSkipVerify = true; # Skip TLS verification for backend servers
-              };
+              } cfg.serversTransport;
 
               providers = mkIf (config.virtualisation.docker.enable || config.virtualisation.podman.enable) {
                 docker = {
