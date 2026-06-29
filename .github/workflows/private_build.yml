@@ -8,6 +8,7 @@ on:
     paths:
       - flake.nix
       - flake.lock
+      - ci/cache-bundle.nix
       - .github/workflows/private_build.yml
   workflow_dispatch:
 
@@ -43,45 +44,31 @@ jobs:
           inputs-from: .
           skip-push: true
 
-      - name: Build allowed packages for ${{ matrix.system }}
-        env:
-          # Unfree packages we use that Hydra never builds, so they are
-          # absent from cache.nixos.org and must be cached ourselves.
-          # One attribute name per line.
-          PACKAGES: |
-            anydesk
-            brscan4
-            claude-code
-            discord
-            gitkraken
-            jetbrains-toolbox
-            n8n
-            spotify
-            tk-safe
-            vscode
-            winbox4
-          # Allow building unfree (non-redistributable) packages.
-          NIXPKGS_ALLOW_UNFREE: "1"
+      - name: Build private cache bundle for ${{ matrix.system }}
         run: |
+          # ci/cache-bundle.nix is a single derivation depending on every
+          # package we want cached, from both the stable and unstable nixpkgs
+          # inputs pinned in flake.lock. The package list lives in that file.
+          #
+          # --keep-going realizes every buildable dependency even if some
+          # fail, so a package that fails to build is simply skipped rather
+          # than aborting the whole run. The bundle itself may fail in that
+          # case; that is fine, we only care about the realized packages.
+          echo "::group::Building bundle"
+          nix build --impure --keep-going --print-build-logs \
+            -f ci/cache-bundle.nix bundle || true
+          echo "::endgroup::"
+
+          # Collect the outputs that actually built, for pushing.
           : > paths.txt
-          # Build each package against both nixpkgs inputs of this repo,
-          # pinned to flake.lock via getFlake (not the ambient registry):
-          #   nixpkgs        -> stable channel
-          #   nixos-unstable -> unstable channel
-          # A package that fails to build (e.g. missing in one channel) is
-          # skipped with a warning so the rest still get cached.
-          for input in nixpkgs nixos-unstable; do
-            while read -r pkg; do
-              [ -z "$pkg" ] && continue
-              echo "::group::Building $pkg ($input)"
-              if ! nix build --print-build-logs --print-out-paths --impure \
-                   --expr "(builtins.getFlake (toString ./.)).inputs.$input.legacyPackages.${{ matrix.system }}.$pkg" \
-                   >> paths.txt; then
-                echo "::warning::Skipping $pkg from $input (build failed)"
-              fi
-              echo "::endgroup::"
-            done <<< "$PACKAGES"
-          done
+          while read -r p; do
+            [ -z "$p" ] && continue
+            if nix path-info "$p" >/dev/null 2>&1; then
+              echo "$p" >> paths.txt
+            else
+              echo "::warning::Skipping $p (not built)"
+            fi
+          done < <(nix eval --impure --raw -f ci/cache-bundle.nix outPathsText)
 
       - name: Push built packages to Attic
         if: github.event_name != 'pull_request'
