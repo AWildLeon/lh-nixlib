@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  lh,
   options,
   pkgsUnstable,
   ...
@@ -153,7 +154,7 @@ in
         };
       };
 
-      tmpfiles.rules = config.lh.lib.mkJailTmpfiles {
+      tmpfiles.rules = lh.lib.modules.mkJailTmpfiles {
         serviceName = "uptime-kuma";
         user = "uptime-kuma";
         group = "uptime-kuma";

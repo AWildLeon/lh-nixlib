@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  lh,
   pkgs,
   ...
 }:
@@ -173,12 +174,12 @@ in
       };
 
       tmpfiles.rules =
-        (config.lh.lib.mkJailTmpfiles {
+        (lh.lib.modules.mkJailTmpfiles {
           serviceName = "zammad";
           user = "zammad";
           group = "zammad";
         })
-        ++ (config.lh.lib.mkJailTmpfiles {
+        ++ (lh.lib.modules.mkJailTmpfiles {
           serviceName = "redis-zammad";
           user = "redis-zammad";
           group = "redis-zammad";

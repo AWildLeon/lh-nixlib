@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  lh,
   options,
   ...
 }:
@@ -122,7 +123,7 @@
             ];
           };
 
-          tmpfiles.rules = config.lh.lib.mkJailTmpfiles {
+          tmpfiles.rules = lh.lib.modules.mkJailTmpfiles {
             serviceName = "grafana";
             user = "grafana";
             group = "grafana";

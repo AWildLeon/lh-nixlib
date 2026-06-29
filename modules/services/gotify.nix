@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  lh,
   ...
 }:
 let
@@ -153,7 +154,7 @@ in
         };
       };
 
-      tmpfiles.rules = config.lh.lib.mkJailTmpfiles {
+      tmpfiles.rules = lh.lib.modules.mkJailTmpfiles {
         serviceName = "gotify";
         user = "gotify";
         group = "gotify";

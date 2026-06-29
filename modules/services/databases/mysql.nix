@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  lh,
   options,
   pkgs,
   ...
@@ -83,7 +84,7 @@
         "d /var/log/mysql 0750 mysql mysql -"
         "d /var/lib/mysql-files 0750 mysql mysql -"
       ]
-      ++ config.lh.lib.mkJailTmpfiles {
+      ++ lh.lib.modules.mkJailTmpfiles {
         serviceName = "mysqld";
         user = "mysql";
         group = "mysql";

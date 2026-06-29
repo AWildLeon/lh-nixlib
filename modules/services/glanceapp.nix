@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  lh,
   pkgs,
   inputs,
   ...
@@ -253,14 +254,14 @@ in
         };
 
         tmpfiles.rules =
-          config.lh.lib.mkJailTmpfiles {
+          lh.lib.modules.mkJailTmpfiles {
             serviceName = "glance";
             user = "glance";
             group = "glance";
           }
           ++ (
             if cfg.enableGlanceIcalEvents then
-              config.lh.lib.mkJailTmpfiles {
+              lh.lib.modules.mkJailTmpfiles {
                 serviceName = "glance-ical-events";
                 user = "glance-ical-events";
                 group = "glance-ical-events";

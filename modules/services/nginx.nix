@@ -1,4 +1,9 @@
-{ lib, config, ... }:
+{
+  lib,
+  config,
+  lh,
+  ...
+}:
 
 let
   cfg = config.lh.services.nginx;
@@ -106,7 +111,7 @@ in
       };
 
       tmpfiles.rules =
-        (config.lh.lib.mkJailTmpfiles {
+        (lh.lib.modules.mkJailTmpfiles {
           serviceName = "nginx";
           user = "nginx";
           group = "nginx";

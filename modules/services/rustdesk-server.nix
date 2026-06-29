@@ -1,4 +1,9 @@
-{ lib, config, ... }:
+{
+  lib,
+  config,
+  lh,
+  ...
+}:
 let
   cfg = config.lh.services.rustdesk-server;
 in
@@ -167,7 +172,7 @@ in
         };
       };
 
-      tmpfiles.rules = config.lh.lib.mkJailTmpfiles {
+      tmpfiles.rules = lh.lib.modules.mkJailTmpfiles {
         serviceName = "rustdesk";
         user = "rustdesk";
         group = "rustdesk";

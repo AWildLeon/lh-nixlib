@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  lh,
   options,
   inputs,
   pkgs,
@@ -410,7 +411,7 @@ in
                 };
           };
 
-          tmpfiles.rules = config.lh.lib.mkJailTmpfiles {
+          tmpfiles.rules = lh.lib.modules.mkJailTmpfiles {
             serviceName = "traefik";
             user = "traefik";
             group = "traefik";

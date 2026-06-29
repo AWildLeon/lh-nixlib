@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  lh,
   options,
   pkgs,
   ...
@@ -326,7 +327,7 @@
           };
 
           tmpfiles.rules =
-            (config.lh.lib.mkJailTmpfiles {
+            (lh.lib.modules.mkJailTmpfiles {
               serviceName = "gitea";
               user = "gitea";
               group = "gitea";

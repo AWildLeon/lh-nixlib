@@ -1,6 +1,7 @@
 {
   pkgsUnstable,
   config,
+  lh,
   lib,
   ...
 }:
@@ -169,7 +170,7 @@ in
         wants = [ "mysql.service" ];
       };
 
-      tmpfiles.rules = config.lh.lib.mkJailTmpfiles {
+      tmpfiles.rules = lh.lib.modules.mkJailTmpfiles {
         serviceName = "vaultwarden";
         user = "vaultwarden";
         group = "vaultwarden";
