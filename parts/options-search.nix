@@ -7,24 +7,36 @@
       ...
     }:
     let
-      inherit (inputs.nuschtosSearch.packages.${system}) mkSearch;
+      inherit (inputs.nuschtosSearch.packages.${system}) mkMultiSearch;
+
+      urlPrefix = "https://github.com/AWildLeon/lh-nixlib/blob/main/";
+
     in
     {
-      packages.options-search =
-        mkSearch {
-          title = "LH Nix Lib Options";
+      packages.options-search = mkMultiSearch {
+        title = "LH Nix Lib Search";
 
-          modules = [
-            self.nixosModule.default
-          ];
+        baseHref = "/";
 
-          urlPrefix = "https://github.com/AWildLeon/lh-nixlib/blob/main/";
-
-          baseHref = "/";
-
-          specialArgs = {
-            inherit inputs pkgs;
-          };
-        };
+        scopes = [
+          {
+            name = "Options";
+            modules = [
+              self.nixosModule.default
+            ];
+            inherit urlPrefix;
+            specialArgs = {
+              inherit inputs pkgs;
+            };
+          }
+          {
+            name = "Packages";
+            # Index this flake's own packages. Drop options-search itself to
+            # avoid referencing the derivation we are currently defining.
+            pkgs = removeAttrs self.packages.${system} [ "options-search" ];
+            inherit urlPrefix;
+          }
+        ];
+      };
     };
 }
