@@ -225,11 +225,6 @@ in
 
               serversTransport = {
                 insecureSkipVerify = true; # Skip TLS verification for backend servers
-                forwardingTimeouts = {
-                  responseHeaderTimeout = "300s";
-                  readIdleTimeout = "300s";
-                  idleConnTimeout = "300s";
-                };
               };
 
               providers = mkIf (config.virtualisation.docker.enable || config.virtualisation.podman.enable) {
