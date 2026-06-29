@@ -1,0 +1,95 @@
+name: Build and push to my private attic server
+# This is used to build non redistributable packages for myself.
+# The Attic Cache used is private
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - flake.nix
+      - flake.lock
+      - .github/workflows/private_build.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            system: x86_64-linux
+          # No ARM Systems Currently.
+          #- runner: ubuntu-24.04-arm
+          #  system: aarch64-linux
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Attic cache
+        uses: ryanccn/attic-action@v0.5.0
+        with:
+          endpoint: ${{ secrets.ATTIC_ENDPOINT }}
+          cache: ${{ secrets.ATTIC_CACHE }}
+          token: ${{ secrets.ATTIC_TOKEN }}
+          inputs-from: .
+          skip-push: true
+
+      - name: Build allowed packages for ${{ matrix.system }}
+        env:
+          # Unfree packages we use that Hydra never builds, so they are
+          # absent from cache.nixos.org and must be cached ourselves.
+          # One attribute name per line.
+          PACKAGES: |
+            anydesk
+            brscan4
+            claude-code
+            discord
+            gitkraken
+            jetbrains-toolbox
+            n8n
+            spotify
+            tk-safe
+            vscode
+            winbox4
+          # Allow building unfree (non-redistributable) packages.
+          NIXPKGS_ALLOW_UNFREE: "1"
+        run: |
+          : > paths.txt
+          # Build each package against both nixpkgs inputs of this repo,
+          # pinned to flake.lock via getFlake (not the ambient registry):
+          #   nixpkgs        -> stable channel
+          #   nixos-unstable -> unstable channel
+          # A package that fails to build (e.g. missing in one channel) is
+          # skipped with a warning so the rest still get cached.
+          for input in nixpkgs nixos-unstable; do
+            while read -r pkg; do
+              [ -z "$pkg" ] && continue
+              echo "::group::Building $pkg ($input)"
+              if ! nix build --print-build-logs --print-out-paths --impure \
+                   --expr "(builtins.getFlake (toString ./.)).inputs.$input.legacyPackages.${{ matrix.system }}.$pkg" \
+                   >> paths.txt; then
+                echo "::warning::Skipping $pkg from $input (build failed)"
+              fi
+              echo "::endgroup::"
+            done <<< "$PACKAGES"
+          done
+
+      - name: Push built packages to Attic
+        if: github.event_name != 'pull_request'
+        run: |
+          # Pushes the listed outputs and their runtime closure.
+          # Build-time-only deps (e.g. go-modules) are not runtime
+          # references and stay out of the cache.
+          while read -r path; do
+            [ -z "$path" ] && continue
+            attic push ${{ secrets.ATTIC_CACHE }} "$path"
+          done < paths.txt
