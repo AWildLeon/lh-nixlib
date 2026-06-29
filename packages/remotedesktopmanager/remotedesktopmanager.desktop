@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=Remote Desktop Manager
+Comment=Centralize, Manage and Secure Remote Connections
+Comment[de]=Zentralisierung, Verwaltung und Sicherung von Remote-Verbindungen
+Comment[fr]=Centralisez, gérez et sécurisez les connexions à distance
+Keywords=rdm;devolutions;rdp;vnc;ssh;hub;dvls;remote;desktop;manager;GTK;
+Exec=env GDK_BACKEND=x11 remotedesktopmanager %U
+Icon=remotedesktopmanager
+Type=Application
+Categories=Utility;Network;RemoteAccess;
+StartupWMClass=RemoteDesktopManager
+StartupNotify=true
+Terminal=false
+MimeType=x-scheme-handler/rdm;application/x-remotedesktopmanager-pvm;application/x-remotedesktopmanager-rdd;application/x-remotedesktopmanager-rdm;application/x-remotedesktopmanager-rdp;
