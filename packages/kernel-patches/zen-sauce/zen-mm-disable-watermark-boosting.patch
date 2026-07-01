@@ -26,29 +26,20 @@ I can't imagine why anyone would want to explicitly enable it, but the
 option is there in case someone does.
 
 Signed-off-by: Sultan Alsawaf <sultan@kerneltoast.com>
----
- init/Kconfig    | 1 +
- mm/page_alloc.c | 4 ++++
- 2 files changed, 5 insertions(+)
 
-diff --git a/init/Kconfig b/init/Kconfig
-index 4e037f68cd37a3..810f7807ada2d9 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -202,6 +202,7 @@ config ZEN_INTERACTIVE
- 
- 	    Background-reclaim hugepages...:   no   ->   yes
- 	    Compact unevictable............:   yes  ->   no
-+	    Watermark boost factor.........:   1.5  ->   0
- 
- 	  --- EEVDF CPU Scheduler --------------------------------
- 
+Note: init/Kconfig hunk dropped — it only adds a doc line to ZEN_INTERACTIVE
+help text which has an offset mismatch against 6.18.36 stable. Functional
+change in mm/page_alloc.c is preserved unchanged.
+---
+ mm/page_alloc.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
 index 677f9bb0428b71..9407f8a22b06f3 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
 @@ -276,7 +276,11 @@ const char * const migratetype_names[MIGRATE_TYPES] = {
- 
+
  int min_free_kbytes = 1024;
  int user_min_free_kbytes = -1;
 +#ifdef CONFIG_ZEN_INTERACTIVE
@@ -58,4 +49,4 @@ index 677f9bb0428b71..9407f8a22b06f3 100644
 +#endif
  static int watermark_scale_factor = 10;
  int defrag_mode;
- 
+
