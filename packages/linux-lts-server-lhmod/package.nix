@@ -1,100 +1,55 @@
-# Linux 6.18 LTS, server/router-tuned with XanMod net patches.
+# Linux 6.18 LTS, server/router-tuned.
 #
-# Profile: throughput over latency — low HZ, no preemption, BBR3, full
-# netfilter feature set (fullcone NAT, flow offload) for routing use cases.
+# Patches are vendored in ../kernel-patches/ — run update-patches.sh to refresh.
+# Sources:
+#   xanmod  https://gitlab.com/xanmod/linux-patches (linux-6.18.y-xanmod)
 #
-# ZFS: out-of-tree OpenZFS is built automatically via linuxPackagesFor.
+# ZFS (out-of-tree, no kernel patch needed):
 #   boot.kernelPackages = pkgs.linuxPackagesFor pkgs.linux-lts-server-lhmod;
 #   boot.supportedFilesystems.zfs = true;
 {
   lib,
   linux_6_18,
-  fetchpatch,
-  maintainers ? [ ],
 }:
 
+let
+  p = ../kernel-patches;
+in
 linux_6_18.override {
   kernelPatches =
     linux_6_18.kernelPatches
     ++ [
-      # ── XanMod clearlinux (throughput-relevant only) ──────────────────────────
-      {
-        name = "xanmod-clearlinux-sched-accept-lifo";
-        patch = fetchpatch {
-          url = "https://gitlab.com/xanmod/linux-patches/-/raw/master/linux-6.18.y-xanmod/clearlinux/0001-sched-wait-Do-accept-in-LIFO-order-for-cache-efficie.patch";
-          hash = "sha256-xZWzn8U5yoijXDg6v3sJ+7vA+EAgyPCGekLix7TKCnE=";
-        };
-      }
-      {
-        name = "xanmod-clearlinux-firmware-stateless";
-        patch = fetchpatch {
-          url = "https://gitlab.com/xanmod/linux-patches/-/raw/master/linux-6.18.y-xanmod/clearlinux/0002-firmware-Enable-stateless-firmware-loading.patch";
-          hash = "sha256-SjQ5wOLc9a/42o9aR9UZlhk+aWHrIP1DWv2RlM7QuAw=";
-        };
-      }
-      {
-        name = "xanmod-clearlinux-rwsem-spin-faster";
-        patch = fetchpatch {
-          url = "https://gitlab.com/xanmod/linux-patches/-/raw/master/linux-6.18.y-xanmod/clearlinux/0003-locking-rwsem-spin-faster.patch";
-          hash = "sha256-4THgso5uVQQekOO2utzPTHjhM1NA5sGAs3Hb14iwYeE=";
-        };
-      }
+      # ── XanMod clearlinux (throughput-relevant only; skip ata/graphics) ──────
+      { name = "xanmod-clearlinux-sched-accept-lifo";  patch = "${p}/xanmod/clearlinux/0001-sched-wait-Do-accept-in-LIFO-order-for-cache-efficie.patch"; }
+      { name = "xanmod-clearlinux-firmware-stateless"; patch = "${p}/xanmod/clearlinux/0002-firmware-Enable-stateless-firmware-loading.patch"; }
+      { name = "xanmod-clearlinux-rwsem-spin-faster";  patch = "${p}/xanmod/clearlinux/0003-locking-rwsem-spin-faster.patch"; }
 
       # ── XanMod net/netfilter ─────────────────────────────────────────────────
-      {
-        name = "xanmod-netfilter-nftables-fullcone";
-        patch = fetchpatch {
-          url = "https://gitlab.com/xanmod/linux-patches/-/raw/master/linux-6.18.y-xanmod/net/netfilter/0001-netfilter-Add-netfilter-nf_tables-fullcone-support.patch";
-          hash = "sha256-4EGkJqX9fp0PWnIqrNIvWFnLoSVAxzIq7TBs1S59BZw=";
-        };
-      }
-      {
-        name = "xanmod-netfilter-xt-flowoffload";
-        patch = fetchpatch {
-          url = "https://gitlab.com/xanmod/linux-patches/-/raw/master/linux-6.18.y-xanmod/net/netfilter/0001-netfilter-add-xt_FLOWOFFLOAD-target.patch";
-          hash = "sha256-87z+Rq5+bMAenZ2veKBT4cquUG9rm+sJknlVBkv1d6U=";
-        };
-      }
+      { name = "xanmod-netfilter-nftables-fullcone"; patch = "${p}/xanmod/net/netfilter/0001-netfilter-Add-netfilter-nf_tables-fullcone-support.patch"; }
+      { name = "xanmod-netfilter-xt-flowoffload";    patch = "${p}/xanmod/net/netfilter/0001-netfilter-add-xt_FLOWOFFLOAD-target.patch"; }
 
       # ── XanMod net/tcp ───────────────────────────────────────────────────────
-      {
-        name = "xanmod-tcp-bbr3";
-        patch = fetchpatch {
-          url = "https://gitlab.com/xanmod/linux-patches/-/raw/master/linux-6.18.y-xanmod/net/tcp/bbr3/0001-tcp_bbr-v3-update-TCP-bbr-congestion-control-module-.patch";
-          hash = "sha256-3oCkx5d4yrDG6jJbkWz6KtoVk51mpzQ/eCimx19EH6g=";
-        };
-      }
-      {
-        name = "xanmod-tcp-cloudflare-collapse-sysctl";
-        patch = fetchpatch {
-          url = "https://gitlab.com/xanmod/linux-patches/-/raw/master/linux-6.18.y-xanmod/net/tcp/cloudflare/0001-tcp-Add-a-sysctl-to-skip-tcp-collapse-processing-whe.patch";
-          hash = "sha256-ipWBD0RjG03ORyohvsRghT9X9I4fl0dyIuWSta6v5rs=";
-        };
-      }
+      { name = "xanmod-tcp-bbr3";                       patch = "${p}/xanmod/net/tcp/bbr3/0001-tcp_bbr-v3-update-TCP-bbr-congestion-control-module-.patch"; }
+      { name = "xanmod-tcp-cloudflare-collapse-sysctl"; patch = "${p}/xanmod/net/tcp/cloudflare/0001-tcp-Add-a-sysctl-to-skip-tcp-collapse-processing-whe.patch"; }
     ];
 
   structuredExtraConfig = with lib.kernel; {
-    # 250 Hz — lower tick rate trades latency for throughput.
     HZ = freeform "250";
     HZ_250 = yes;
     HZ_1000 = lib.mkForce no;
     HZ_300 = lib.mkForce no;
 
-    # No preemption — maximizes throughput for server workloads.
     PREEMPT_NONE = yes;
     PREEMPT_VOLUNTARY = lib.mkForce no;
 
-    # Always-on THP — servers benefit from reduced page-table overhead.
     TRANSPARENT_HUGEPAGE = yes;
     TRANSPARENT_HUGEPAGE_ALWAYS = yes;
     TRANSPARENT_HUGEPAGE_MADVISE = lib.mkForce no;
 
-    # BBR3 (updated by xanmod-tcp-bbr3 patch).
     TCP_CONG_BBR = yes;
     DEFAULT_BBR = yes;
     DEFAULT_CUBIC = lib.mkForce no;
 
-    # Routing / advanced networking.
     IP_ADVANCED_ROUTER = yes;
     IP_MULTIPLE_TABLES = yes;
     IP_ROUTE_MULTIPATH = yes;
@@ -102,7 +57,6 @@ linux_6_18.override {
     IPV6_SUBTREES = yes;
     NETFILTER_CONNTRACK_TIMESTAMP = yes;
 
-    # Ensure out-of-tree modules (ZFS, DKMS) build correctly.
     TRIM_UNUSED_KSYMS = lib.mkForce no;
   };
 }

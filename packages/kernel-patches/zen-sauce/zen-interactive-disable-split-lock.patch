@@ -1,0 +1,52 @@
+From 0c87fdcd1f9f7f1a09e8928422160159b8966784 Mon Sep 17 00:00:00 2001
+From: Steven Barrett <steven@liquorix.net>
+Date: Sat, 14 Feb 2026 08:59:02 -0600
+Subject: [PATCH] ZEN: INTERACTIVE: Disable split lock mitigation by default
+
+Split lock detection and mitigation is useful on multi tenant systems
+where the software interacting with the kernel may not be in control of
+the system owner.  Rate limiting bad code is important to reduce the
+effect of split locks on other tenants.
+
+However, most Zen Kernel users are running this kernel for just
+themselves and are unlikely to have multiple interactive sessions at
+once.
+
+Turn off split lock mitigation, by default so software that would
+otherwise be rate limited works as intended.
+---
+ arch/x86/kernel/cpu/bus_lock.c | 4 ++++
+ init/Kconfig                   | 4 ++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/arch/x86/kernel/cpu/bus_lock.c b/arch/x86/kernel/cpu/bus_lock.c
+index 981f8b1f07922c..b4bd161c8a5514 100644
+--- a/arch/x86/kernel/cpu/bus_lock.c
++++ b/arch/x86/kernel/cpu/bus_lock.c
+@@ -46,7 +46,11 @@ static const struct {
+ 
+ static struct ratelimit_state bld_ratelimit;
+ 
++#ifdef CONFIG_ZEN_INTERACTIVE
++static unsigned int sysctl_sld_mitigate;
++#else
+ static unsigned int sysctl_sld_mitigate = 1;
++#endif
+ static DEFINE_SEMAPHORE(buslock_sem, 1);
+ 
+ #ifdef CONFIG_PROC_SYSCTL
+diff --git a/init/Kconfig b/init/Kconfig
+index 55217cc7e416b6..70a4a197ab600c 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -223,6 +223,10 @@ config ZEN_INTERACTIVE
+ 	    Ondemand default up threshold..:  80    ->  55
+ 	    Ondemand micro up threshold....:  95    ->  60
+ 
++	  --- Split/Bus lock detection --------------------------
++
++	    Split Lock Mitigate............:   1    ->   0
++
+ config BROKEN
+ 	bool
+ 	help
