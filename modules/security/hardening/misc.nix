@@ -6,7 +6,11 @@
   };
 
   config = lib.mkIf config.lh.security.hardenMisc.enable {
-    security.sudo.enable = lib.mkDefault false;
+    security.sudo = {
+      enable = true;
+      execWheelOnly = true;
+      wheelNeedsPassword = true;
+    };
     environment.defaultPackages = lib.mkForce [ ];
     systemd.coredump.enable = lib.mkDefault false;
   };
