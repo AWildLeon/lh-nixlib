@@ -30,15 +30,29 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Build Nix-Netrc
+        run: |
+          cat <<EOF > /etc/nix_netrc
+          machine ${{ secrets.ATTIC_ENDPOINT }}
+          login dummy
+          password ${{ secrets.ATTIC_TOKEN }}
+          EOF
+          chmod 400 /etc/nix_netrc
+
       - uses: cachix/install-nix-action@v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+            extra-substituters = https://awildleon-nixlib.cachix.org https://nix-community.cachix.org https://cache.numtide.com https://${{ secrets.ATTIC_ENDPOINT }}/${{ secrets.ATTIC_CACHE }}
+            extra-trusted-public-keys = awildleon-nixlib.cachix.org-1:jDsApfkbRWepIRrxDVVFUJHQLuAgliX0WTicUnTs9rI= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g= ${{ secrets.ATTIC_CACHE }}:BmioIhRIq/4ZvQHLcmMIWGVlcPROiGjvXpHJhp1h7pA=
+            max-jobs = auto
+            cores = 0
+            netrc-file = /etc/nix_netrc
 
       - name: Setup Attic cache
         uses: ryanccn/attic-action@v0.5.0
         with:
-          endpoint: ${{ secrets.ATTIC_ENDPOINT }}
+          endpoint: https://${{ secrets.ATTIC_ENDPOINT }}
           cache: ${{ secrets.ATTIC_CACHE }}
           token: ${{ secrets.ATTIC_TOKEN }}
           inputs-from: .
