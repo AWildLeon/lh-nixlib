@@ -13,23 +13,14 @@ developers care a lot about system responsiveness. Lets implement the
 same change so Zen Kernel users benefit.
 
 [1]: https://bugs.chromium.org/p/chromium/issues/detail?id=263561
----
- init/Kconfig | 1 +
- mm/swap.c    | 5 +++++
- 2 files changed, 6 insertions(+)
 
-diff --git a/init/Kconfig b/init/Kconfig
-index 810f7807ada2d9..6f4378c26f3607 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -203,6 +203,7 @@ config ZEN_INTERACTIVE
- 	    Background-reclaim hugepages...:   no   ->   yes
- 	    Compact unevictable............:   yes  ->   no
- 	    Watermark boost factor.........:   1.5  ->   0
-+	    Swap-in readahead..............:   3    ->   0
- 
- 	  --- EEVDF CPU Scheduler --------------------------------
- 
+Note: init/Kconfig hunk dropped — doc-only addition to ZEN_INTERACTIVE
+help text; offset mismatch against 6.18.36 stable. Functional mm/swap.c
+change preserved.
+---
+ mm/swap.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
 diff --git a/mm/swap.c b/mm/swap.c
 index 2260dcd2775e75..3a7aefc524e56a 100644
 --- a/mm/swap.c
@@ -43,13 +34,13 @@ index 2260dcd2775e75..3a7aefc524e56a 100644
 +	page_cluster = 0;
 +#else
  	unsigned long megs = PAGES_TO_MB(totalram_pages());
- 
+
  	/* Use a smaller cluster for small-memory machines */
 @@ -1112,6 +1116,7 @@ void __init swap_setup(void)
  	 * Right now other parts of the system means that we
  	 * _really_ don't want to cluster much more
  	 */
 +#endif
- 
+
  	register_sysctl_init("vm", swap_sysctl_table);
  }
