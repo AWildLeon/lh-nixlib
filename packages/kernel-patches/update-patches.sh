@@ -28,7 +28,6 @@ ZEN_RAW="https://raw.githubusercontent.com/zen-kernel/zen-kernel/6.18/main"
 
 section "zen-sauce license + patches"
 fetch zen-sauce/COPYING "$ZEN_RAW/COPYING"
-fetch zen-sauce/zen-userns-clone-default.patch        "$ZEN_BASE/32af6da533c77f4310e477c3ee66646dd03cb4ad.patch"
 fetch zen-sauce/zen-interactive-base.patch             "$ZEN_BASE/eb977217b0d0ff7df05ff1f8959cfc189e15d3a6.patch"
 fetch zen-sauce/zen-ahci-disable-staggered-spinup.patch "$ZEN_BASE/081953d744c06eb69253f10c95c08e61814e20eb.patch"
 fetch zen-sauce/zen-kswapd-early-stop.patch            "$ZEN_BASE/c3f4f675371b19a163eff5ccb46915a554421c31.patch"

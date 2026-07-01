@@ -19,7 +19,6 @@ to the `update-patches.sh` fetch list, and re-run the script.
 
 | File | Upstream commit |
 |------|----------------|
-| `zen-sauce/zen-userns-clone-default.patch` | `32af6da5` |
 | `zen-sauce/zen-interactive-base.patch` | `eb977217` |
 | `zen-sauce/zen-ahci-disable-staggered-spinup.patch` | `081953d7` |
 | `zen-sauce/zen-kswapd-early-stop.patch` | `c3f4f675` |

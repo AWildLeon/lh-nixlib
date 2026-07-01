@@ -21,7 +21,6 @@ linux_6_18.override {
     linux_6_18.kernelPatches
     ++ [
       # ── zen-sauce ────────────────────────────────────────────────────────────
-      { name = "zen-userns-clone-default";           patch = "${p}/zen-sauce/zen-userns-clone-default.patch"; }
       { name = "zen-interactive-base";               patch = "${p}/zen-sauce/zen-interactive-base.patch"; }
       { name = "zen-ahci-disable-staggered-spinup";  patch = "${p}/zen-sauce/zen-ahci-disable-staggered-spinup.patch"; }
       { name = "zen-kswapd-early-stop";              patch = "${p}/zen-sauce/zen-kswapd-early-stop.patch"; }
