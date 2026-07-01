@@ -32,12 +32,12 @@ jobs:
 
       - name: Build Nix-Netrc
         run: |
-          cat <<EOF > /nix_netrc
+          cat <<EOF > "${{ runner.temp }}/nix_netrc"
           machine ${{ secrets.ATTIC_ENDPOINT }}
           login dummy
           password ${{ secrets.ATTIC_TOKEN }}
           EOF
-          chmod 400 /nix_netrc
+          chmod 400 "${{ runner.temp }}/nix_netrc"
 
       - uses: cachix/install-nix-action@v31
         with:
@@ -47,7 +47,7 @@ jobs:
             extra-trusted-public-keys = awildleon-nixlib.cachix.org-1:jDsApfkbRWepIRrxDVVFUJHQLuAgliX0WTicUnTs9rI= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g= ${{ secrets.ATTIC_CACHE }}:BmioIhRIq/4ZvQHLcmMIWGVlcPROiGjvXpHJhp1h7pA=
             max-jobs = auto
             cores = 0
-            netrc-file = /nix_netrc
+            netrc-file = ${{ runner.temp }}/nix_netrc
 
       - name: Setup Attic cache
         uses: ryanccn/attic-action@v0.5.0
