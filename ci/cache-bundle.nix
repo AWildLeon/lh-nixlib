@@ -41,6 +41,8 @@ let
     "tk-safe"
     "vscode"
     "winbox4"
+    "rustdesk"
+    "rustdesk-flutter"
   ];
 
   # Keep only packages that both exist and evaluate to a buildable
@@ -53,7 +55,12 @@ let
         let
           v = pkgs.${n} or null;
         in
-        if v == null then null else if (builtins.tryEval v.drvPath).success then v else null
+        if v == null then
+          null
+        else if (builtins.tryEval v.drvPath).success then
+          v
+        else
+          null
       ) names
     );
 
