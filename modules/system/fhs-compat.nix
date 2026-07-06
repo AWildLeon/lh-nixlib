@@ -32,7 +32,6 @@ with lib;
           freetype
           fuse3
           icu
-          libnotify
           libsodium
           libssh
           libunwind
@@ -62,6 +61,7 @@ with lib;
           gdk-pixbuf
           glib
           gtk3
+          libnotify
           libGL
           libappindicator-gtk3
           vulkan-loader
