@@ -1,6 +1,7 @@
 {
   lib,
   fetchFromGitHub,
+  nix-update-script,
   maintainers,
 }:
 
@@ -11,6 +12,8 @@ fetchFromGitHub {
   repo = "dashboard-icons";
   rev = "159b55c82cc3874d7239d12455cc331cd161f680";
   hash = "sha256-LKZzGIdowY4ePo2nw5MSO3oXXLgL0vdt9RRhIy4+FlM=";
+
+  passthru.updateScript = nix-update-script { extraArgs = [ "--version=branch" ]; };
 
   meta = {
     description = "Your definitive source for dashboard icons";

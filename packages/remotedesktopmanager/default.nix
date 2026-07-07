@@ -4,6 +4,7 @@
   buildFHSEnv,
   libarchive,
   binutils,
+  nix-update-script,
 }:
 
 let
@@ -72,4 +73,8 @@ buildFHSEnv {
   '';
 
   runScript = "/usr/lib/devolutions/RemoteDesktopManager/RemoteDesktopManager";
+
+  # No release feed to autodetect from; bump manually, e.g.:
+  #   nix-update --flake remotedesktopmanager --version=2025.3.2.0
+  passthru.updateScript = nix-update-script { };
 }

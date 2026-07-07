@@ -1,0 +1,54 @@
+name: Update packages
+
+# Runs nix-update against the packages that carry a passthru.updateScript
+# and opens a PR with whatever changed. Packages without an updateScript
+# (traefik, glance: track nixpkgs directly; kernels: version comes from the
+# nixpkgs pin, not upstream; remotedesktopmanager: no autodetectable release
+# feed, bump manually) are intentionally left out of this list.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # weekly, Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Run nix-update for each package
+        env:
+          PACKAGES: |
+            dashboard-icons
+            selfhst-icons
+            accel-ppp
+        run: |
+          echo "$PACKAGES" | while read -r pkg; do
+            [ -z "$pkg" ] && continue
+            echo "::group::Updating $pkg"
+            nix run nixpkgs#nix-update -- --flake "$pkg" || \
+              echo "::warning::nix-update failed for $pkg"
+            echo "::endgroup::"
+          done
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "packages: automated update"
+          title: "Automated package updates"
+          body: |
+            Automated run of `nix-update` for packages that carry a
+            `passthru.updateScript`. Review the diff (especially license
+            and source-layout changes) before merging.
+          branch: auto-update/packages
+          delete-branch: true

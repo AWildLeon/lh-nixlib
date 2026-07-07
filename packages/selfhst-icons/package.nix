@@ -1,6 +1,7 @@
 {
   lib,
   fetchFromGitHub,
+  nix-update-script,
   maintainers,
 }:
 
@@ -11,6 +12,8 @@ fetchFromGitHub {
   repo = "icons";
   rev = "6e0e196eb824ba991eddf63e0975af0bd54bbf31";
   hash = "sha256-aH+KJJKxpPOWCN43Cf5H3NKuILxRkch8nwA0td3x/Xk=";
+
+  passthru.updateScript = nix-update-script { extraArgs = [ "--version=branch" ]; };
 
   meta = {
     description = "Collection of icons and logos maintained by selfh.st";
