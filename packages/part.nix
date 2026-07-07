@@ -13,5 +13,7 @@ in
 
       packages.linux-lts-desktop-lhmod = pkgs.callPackage ./linux-lts-desktop-lhmod/package.nix { };
       packages.linux-lts-server-lhmod = pkgs.callPackage ./linux-lts-server-lhmod/package.nix { };
+
+      packages.accel-ppp = pkgs.callPackage ./accel-ppp/package.nix { inherit maintainers; };
     };
 }

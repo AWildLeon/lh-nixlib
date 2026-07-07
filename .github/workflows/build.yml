@@ -56,6 +56,7 @@ jobs:
             glance
             dashboard-icons
             selfhst-icons
+            accel-ppp
         run: |
           : > paths.txt
           echo "$PACKAGES" | while read -r pkg; do
