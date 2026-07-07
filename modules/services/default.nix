@@ -1,5 +1,6 @@
 {
   imports = [
+    ./accel-ppp.nix
     ./databases/mysql.nix
     ./databases/postgres.nix
     ./gitea.nix
