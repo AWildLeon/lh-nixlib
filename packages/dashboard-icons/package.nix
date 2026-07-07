@@ -1,17 +1,27 @@
 {
   lib,
+  stdenvNoCC,
   fetchFromGitHub,
   nix-update-script,
   maintainers,
 }:
 
-fetchFromGitHub {
+stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "dashboard-icons";
-  version = "unstable";
-  owner = "homarr-labs";
-  repo = "dashboard-icons";
-  rev = "159b55c82cc3874d7239d12455cc331cd161f680";
-  hash = "sha256-LKZzGIdowY4ePo2nw5MSO3oXXLgL0vdt9RRhIy4+FlM=";
+  version = "0-unstable-2026-06-12";
+
+  src = fetchFromGitHub {
+    owner = "homarr-labs";
+    repo = "dashboard-icons";
+    rev = "00c43aa6857e2905b1d59bfceddfca7bc145f44a";
+    hash = "sha256-d3hvWlkxCXr5ZdPYer2g58CgN0uUYZYG4Ow5qHxkaYw=";
+  };
+
+  dontConfigure = true;
+  dontBuild = true;
+  installPhase = ''
+    cp -r . "$out"
+  '';
 
   passthru.updateScript = nix-update-script { extraArgs = [ "--version=branch" ]; };
 
@@ -22,4 +32,4 @@ fetchFromGitHub {
     maintainers = [ maintainers.awildleon ];
     platforms = lib.platforms.all;
   };
-}
+})

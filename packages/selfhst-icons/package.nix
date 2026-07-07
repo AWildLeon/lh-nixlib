@@ -1,17 +1,27 @@
 {
   lib,
+  stdenvNoCC,
   fetchFromGitHub,
   nix-update-script,
   maintainers,
 }:
 
-fetchFromGitHub {
+stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "selfhst-icons";
-  version = "unstable";
-  owner = "selfhst";
-  repo = "icons";
-  rev = "6e0e196eb824ba991eddf63e0975af0bd54bbf31";
-  hash = "sha256-aH+KJJKxpPOWCN43Cf5H3NKuILxRkch8nwA0td3x/Xk=";
+  version = "0-unstable-2026-07-01";
+
+  src = fetchFromGitHub {
+    owner = "selfhst";
+    repo = "icons";
+    rev = "d3a5d5cca6581d643a9fc4266eaf85b0a24a7d68";
+    hash = "sha256-cBAUtkNS4S0SL69+RwVOe/RBtoU5+kblgUBjY/TXTq4=";
+  };
+
+  dontConfigure = true;
+  dontBuild = true;
+  installPhase = ''
+    cp -r . "$out"
+  '';
 
   passthru.updateScript = nix-update-script { extraArgs = [ "--version=branch" ]; };
 
@@ -22,4 +32,4 @@ fetchFromGitHub {
     maintainers = [ maintainers.awildleon ];
     platforms = lib.platforms.all;
   };
-}
+})
