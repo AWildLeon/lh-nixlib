@@ -105,8 +105,7 @@ jobs:
       - name: Build kernels for ${{ matrix.system }}
         env:
           KERNELS: |
-            linux-lts-desktop-lhmod
-            linux-lts-server-lhmod
+            linux-lts-router-lhmod
         run: |
           : > paths.txt
           echo "$KERNELS" | while read -r pkg; do
@@ -122,8 +121,7 @@ jobs:
         env:
           SYSTEM: ${{ matrix.system }}
           KERNELS: |
-            linux-lts-desktop-lhmod
-            linux-lts-server-lhmod
+            linux-lts-router-lhmod
         run: |
           # ZFS is an independent out-of-tree module; built here only to warm
           # the cache so NixOS machines don't have to compile it locally.
