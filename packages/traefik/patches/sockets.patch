@@ -87,21 +87,40 @@ index 6967f6e7b..a46bfeb6e 100644
  			Msg("Creating server")
  
 diff --git a/pkg/server/service/smart_roundtripper.go b/pkg/server/service/smart_roundtripper.go
-index a1d7b3f1a..d18b89792 100644
 --- a/pkg/server/service/smart_roundtripper.go
 +++ b/pkg/server/service/smart_roundtripper.go
-@@ -1,6 +1,7 @@
+@@ -1,9 +1,14 @@
  package service
  
  import (
 +	"context"
- 	"crypto/tls"
- 	"net"
++	"crypto/tls"
++	"net"
  	"net/http"
-@@ -20,6 +21,15 @@ func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, erro
- 	return t.Transport.RoundTrip(req)
- }
++	"time"
  
+ 	"golang.org/x/net/http/httpguts"
++	"golang.org/x/net/http2"
+ )
+ 
+ func newSmartRoundTripper(transport *http.Transport) *smartRoundTripper {
+@@ -23,6 +28,9 @@
+ 	transportH2C.Protocols = new(http.Protocols)
+ 	transportH2C.Protocols.SetUnencryptedHTTP2(true)
+ 
++	// Unix socket support: register custom protocols on the default (HTTP/2) transport.
++	registerUnixProtocols(transportHTTP2)
++
+ 	return &smartRoundTripper{
+ 		http2: transportHTTP2,
+ 		http:  transportHTTP1,
+@@ -63,3 +71,64 @@
+ 
+ 	return m.http2.RoundTrip(req)
+ }
++
++// unixTransport rewrites the "unix+http" scheme back to "http" before delegating
++// to an http.Transport that dials the Unix socket.
 +type unixTransport struct {
 +	http.Transport
 +}
@@ -111,19 +130,26 @@ index a1d7b3f1a..d18b89792 100644
 +	return t.Transport.RoundTrip(req)
 +}
 +
- func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic.ForwardingTimeouts) (*smartRoundTripper, error) {
- 	transportHTTP1 := transport.Clone()
- 
-@@ -49,6 +59,41 @@ func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic
- 
- 	transport.RegisterProtocol("h2c", transportH2C)
- 
-+	// Unix socket support for HTTP/1
++// unixH2CTransport rewrites the "unix+h2c" scheme to "http" before delegating to
++// an http2.Transport that dials the Unix socket with prior-knowledge H2C.
++type unixH2CTransport struct {
++	*http2.Transport
++}
++
++func (t *unixH2CTransport) RoundTrip(req *http.Request) (*http.Response, error) {
++	req.URL.Scheme = "http"
++	return t.Transport.RoundTrip(req)
++}
++
++// registerUnixProtocols wires up "unix+http" and "unix+h2c" schemes so that
++// backends addressed via a Unix socket path are dialed over "unix".
++func registerUnixProtocols(transport *http.Transport) {
 +	dialer := &net.Dialer{
 +		Timeout:   30 * time.Second,
 +		KeepAlive: 30 * time.Second,
 +	}
 +
++	// Unix socket support for HTTP/1.
 +	transport.RegisterProtocol("unix+http", &unixTransport{
 +		Transport: http.Transport{
 +			MaxIdleConnsPerHost:   transport.MaxIdleConnsPerHost,
@@ -139,8 +165,8 @@ index a1d7b3f1a..d18b89792 100644
 +		},
 +	})
 +
-+	// Unix socket support for HTTP/2 (H2C)
-+	transport.RegisterProtocol("unix+h2c", &h2cTransportWrapper{
++	// Unix socket support for HTTP/2 (H2C).
++	transport.RegisterProtocol("unix+h2c", &unixH2CTransport{
 +		Transport: &http2.Transport{
 +			DialTLS: func(netw, addr string, cfg *tls.Config) (net.Conn, error) {
 +				host, _, err := net.SplitHostPort(addr)
@@ -152,7 +178,4 @@ index a1d7b3f1a..d18b89792 100644
 +			AllowHTTP: true,
 +		},
 +	})
-+
- 	return &smartRoundTripper{
- 		http2: transport,
- 		http:  transportHTTP1,
++}
