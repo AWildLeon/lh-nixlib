@@ -258,6 +258,11 @@ linux_6_18.override {
     USB_STORAGE = lib.mkForce no;
     USB_UAS = lib.mkForce no;
     USB_SERIAL = lib.mkForce no;
+    # On arm64 the Tegra EHCI host driver `select`s USB_GADGET, so both must
+    # be off together — otherwise Kconfig can never satisfy USB_GADGET=n and
+    # generate-config.pl aborts with "repeated question". Tegra is SoC silicon
+    # that never exists under KVM/PCIe passthrough anyway.
+    USB_EHCI_TEGRA = lib.mkForce no;
     USB_GADGET = lib.mkForce no;
     USB_PRINTER = lib.mkForce no;
 
