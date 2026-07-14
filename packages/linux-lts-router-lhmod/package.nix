@@ -8,31 +8,12 @@
   linux_6_18,
 }:
 
-let
-  p = ../kernel-patches;
-in
 linux_6_18.override {
   # We force off whole subsystems (DRM/SOUND/BT/MEDIA/STAGING); nixpkgs'
   # common-config.nix still forces answers for their children (SND_*,
   # MEDIA_*, ...), which become unreachable and are flagged as errors
   # without this.
   ignoreConfigErrors = true;
-
-  kernelPatches =
-    linux_6_18.kernelPatches
-    ++ [
-      # ── XanMod clearlinux (throughput-relevant only; skip ata/graphics) ──────
-      { name = "xanmod-clearlinux-sched-accept-lifo";  patch = "${p}/xanmod/clearlinux/0001-sched-wait-Do-accept-in-LIFO-order-for-cache-efficie.patch"; }
-      { name = "xanmod-clearlinux-rwsem-spin-faster";  patch = "${p}/xanmod/clearlinux/0003-locking-rwsem-spin-faster.patch"; }
-
-      # ── XanMod net/netfilter ─────────────────────────────────────────────────
-      { name = "xanmod-netfilter-nftables-fullcone"; patch = "${p}/xanmod/net/netfilter/0001-netfilter-Add-netfilter-nf_tables-fullcone-support.patch"; }
-      { name = "xanmod-netfilter-xt-flowoffload";    patch = "${p}/xanmod/net/netfilter/0001-netfilter-add-xt_FLOWOFFLOAD-target.patch"; }
-
-      # ── XanMod net/tcp ───────────────────────────────────────────────────────
-      { name = "xanmod-tcp-bbr3";                       patch = "${p}/xanmod/net/tcp/bbr3/0001-tcp_bbr-v3-update-TCP-bbr-congestion-control-module-.patch"; }
-      { name = "xanmod-tcp-cloudflare-collapse-sysctl"; patch = "${p}/xanmod/net/tcp/cloudflare/0001-tcp-Add-a-sysctl-to-skip-tcp-collapse-processing-whe.patch"; }
-    ];
 
   structuredExtraConfig = with lib.kernel; {
     # ── TCP-AO (RFC 5925) + legacy MD5 (RFC 2385) for routing-protocol peers ──
@@ -51,11 +32,12 @@ linux_6_18.override {
     DEFAULT_BBR = yes;
     DEFAULT_CUBIC = lib.mkForce no;
 
-    # ── jitter: fine-grained tick + low-latency preemption ─────────────────
-    HZ = freeform "1000";
-    HZ_1000 = yes;
-    HZ_250 = lib.mkForce no;
+    HZ = freeform "250";
+    HZ_1000 = lib.mkForce no;
+    HZ_250 = yes;
     HZ_300 = lib.mkForce no;
+    NO_HZ_IDLE = yes;
+    HIGH_RES_TIMERS = yes;
 
     PREEMPT = lib.mkForce yes;
     PREEMPT_NONE = lib.mkForce no;
