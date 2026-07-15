@@ -37,7 +37,31 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
-      - name: Force-push release to built commit
+      - name: Push release to built commit if newer
+        env:
+          BUILT_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          git push --force origin \
-            "${{ github.event.workflow_run.head_sha }}:refs/heads/release"
+          git fetch --no-tags origin +refs/heads/release:refs/remotes/origin/release || true
+
+          if git rev-parse --verify --quiet refs/remotes/origin/release >/dev/null; then
+            current="$(git rev-parse refs/remotes/origin/release)"
+
+            if [ "$current" = "$BUILT_SHA" ]; then
+              echo "release already at $BUILT_SHA, nothing to do."
+              exit 0
+            fi
+
+            # Compare committer dates instead of ancestry so that a rewritten
+            # history (rebase/amend) can still advance release. Only push when
+            # the built commit is strictly newer than the current release tip,
+            # preventing an older/slower build from clobbering a newer release.
+            current_ts="$(git show -s --format=%ct "$current")"
+            built_ts="$(git show -s --format=%ct "$BUILT_SHA")"
+
+            if [ "$built_ts" -le "$current_ts" ]; then
+              echo "built commit $BUILT_SHA ($built_ts) not newer than release $current ($current_ts), skipping."
+              exit 0
+            fi
+          fi
+
+          git push --force origin "$BUILT_SHA:refs/heads/release"
