@@ -36,7 +36,13 @@ linux_6_18.override {
     HZ_1000 = lib.mkForce no;
     HZ_250 = yes;
     HZ_300 = lib.mkForce no;
-    NO_HZ_IDLE = yes;
+    # "Timer tick handling" is a Kconfig choice (HZ_PERIODIC/NO_HZ_IDLE/
+    # NO_HZ_FULL). Force the other two members off, else the base config's
+    # own member stays `y` and generate-config.pl aborts with "conflicting
+    # answers" over the choice group.
+    HZ_PERIODIC = lib.mkForce no;
+    NO_HZ_IDLE = lib.mkForce yes;
+    NO_HZ_FULL = lib.mkForce no;
     HIGH_RES_TIMERS = yes;
 
     PREEMPT = lib.mkForce yes;
