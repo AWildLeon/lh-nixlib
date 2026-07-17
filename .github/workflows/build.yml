@@ -107,40 +107,27 @@ jobs:
           KERNELS: |
             linux-lts-router-lhmod
         run: |
+          # Build ALL outputs (`^*`), not just the default `out`. A kernel
+          # derivation has out/dev/modules; the nixos toplevel needs `-modules`
+          # (and `-dev` for out-of-tree module builds). Pushing only `out`
+          # leaves `-modules` uncached, so every deploy re-runs the whole
+          # kernel derivation to regenerate it — a full recompile. `^*` +
+          # --print-out-paths caches every output so deploys are a pure fetch.
+          #
+          # No separate out-of-tree module step: the only consumer of this
+          # kernel (router.home.core) declares no extraModulePackages and uses
+          # btrfs (no ZFS). Add per-kernel module builds here if/when a host
+          # that runs one of these kernels pulls in ZFS/nvidia/etc.
           : > paths.txt
           echo "$KERNELS" | while read -r pkg; do
             [ -z "$pkg" ] && continue
-            echo "::group::Building $pkg"
+            echo "::group::Building $pkg (all outputs)"
             nix build --print-build-logs --print-out-paths \
-              ".#packages.${{ matrix.system }}.$pkg" >> paths.txt || \
+              ".#packages.${{ matrix.system }}.$pkg^*" >> paths.txt || \
               echo "::warning::$pkg failed to build"
             echo "::endgroup::"
           done
 
-      - name: Build ZFS module against custom kernels for ${{ matrix.system }}
-        env:
-          SYSTEM: ${{ matrix.system }}
-          KERNELS: |
-            linux-lts-router-lhmod
-        run: |
-          # ZFS is an independent out-of-tree module; built here only to warm
-          # the cache so NixOS machines don't have to compile it locally.
-          zfsAttr=$(nix eval --raw \
-            "github:NixOS/nixpkgs/$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock)#zfs.kernelModuleAttribute")
-          echo "$KERNELS" | while read -r pkg; do
-            [ -z "$pkg" ] && continue
-            echo "::group::ZFS ($zfsAttr) against $pkg"
-            nix build --print-build-logs --print-out-paths --impure --expr "
-              let
-                flake = builtins.getFlake (toString ./.);
-                pkgs  = flake.inputs.nixpkgs.legacyPackages.\"$SYSTEM\";
-                kernel = flake.packages.\"$SYSTEM\".\"$pkg\";
-              in
-                (pkgs.linuxPackagesFor kernel).${zfsAttr}
-            " >> paths.txt || echo "::warning::ZFS against $pkg failed"
-            echo "::endgroup::"
-          done
-
-      - name: Push kernels and ZFS modules to Cachix
+      - name: Push kernels to Cachix
         if: github.event_name != 'pull_request'
         run: cachix push awildleon-nixlib < paths.txt
