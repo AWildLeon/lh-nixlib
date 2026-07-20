@@ -154,7 +154,7 @@ in
             "/etc/passwd"
             "/run/mysqld"
           ]
-          ++ (if cfg.envFile != null then [ cfg.envFile ] else [ ]);
+          ++ lib.optional (cfg.envFile != null) cfg.envFile;
           BindPaths = [ "/var/lib/vaultwarden:/var/lib/vaultwarden" ];
 
           ReadWritePaths = [

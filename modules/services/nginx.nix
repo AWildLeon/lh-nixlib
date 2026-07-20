@@ -69,8 +69,8 @@ in
 
     systemd = lib.mkIf (!cfg.disableJail) {
       services.nginx = {
-        wants = if config.services.mysql.enable then [ "mysql.service" ] else [ ];
-        after = if config.services.mysql.enable then [ "mysql.service" ] else [ ];
+        wants = lib.optional config.services.mysql.enable "mysql.service";
+        after = lib.optional config.services.mysql.enable "mysql.service";
         serviceConfig = {
           ProtectSystem = lib.mkForce "strict";
           SystemCallErrorNumber = "EPERM";
@@ -99,8 +99,8 @@ in
             "/etc/static/ssl"
             "/run/phpfpm:/run/phpfpm"
           ]
-          ++ (if cfg.enableAcme then [ "/var/lib/acme" ] else [ ])
-          ++ (if config.services.mysql.enable then [ "/run/mysqld" ] else [ ])
+          ++ lib.optional cfg.enableAcme "/var/lib/acme"
+          ++ lib.optional config.services.mysql.enable "/run/mysqld"
           ++ cfg.ReadOnlyPaths;
           BindPaths = [
             "/var/www:/var/www"
