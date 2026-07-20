@@ -1,4 +1,4 @@
 { lib }:
 {
-  mkJailTmpfiles = import ./mkJailTmpfiles.nix { inherit lib; };
+  mkJailTmpfiles = import ./mk-jail-tmpfiles.nix { inherit lib; };
 }
