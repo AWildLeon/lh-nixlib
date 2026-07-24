@@ -126,6 +126,16 @@ jobs:
               ".#packages.${{ matrix.system }}.$pkg^*" >> paths.txt || \
               echo "::warning::$pkg failed to build"
             echo "::endgroup::"
+
+            # Also cache the kernel's config derivation (linux-config-VERSION).
+            # It's a build-time dep resolved via `.configfile`, not a runtime
+            # reference of the kernel outputs, so `^*` above won't pull it in.
+            # Without it every deploy re-realises the config drv from scratch.
+            echo "::group::Building $pkg configfile"
+            nix build --print-build-logs --print-out-paths \
+              ".#packages.${{ matrix.system }}.$pkg.configfile" >> paths.txt || \
+              echo "::warning::$pkg configfile failed to build"
+            echo "::endgroup::"
           done
 
       - name: Push kernels to Cachix
