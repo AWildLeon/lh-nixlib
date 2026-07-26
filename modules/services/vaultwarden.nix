@@ -180,7 +180,11 @@ in
     services = {
 
       vaultwarden = {
-        package = inputs-lhnixlib.nixpkgs-master.legacyPackages.${pkgsUnstable.stdenv.system}.vaultwarden-mysql;
+        package =
+          pkgsUnstable.callPackage "${inputs-lhnixlib.nixpkgs-master}/pkgs/by-name/va/vaultwarden/package.nix"
+            {
+              dbBackend = "mysql";
+            };
         enable = true;
         dbBackend = "mysql";
       }
