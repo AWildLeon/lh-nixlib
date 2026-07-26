@@ -75,69 +75,69 @@ jobs:
           # references and stay out of the cache.
           cachix push awildleon-nixlib < paths.txt
 
-  build-kernels:
-    # Kernel compilations take 1-2 h on free runners.  Run in parallel with
-    # build but in a separate job so a kernel failure never blocks other pkgs.
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: ubuntu-latest
-            system: x86_64-linux
-          - runner: ubuntu-24.04-arm
-            system: aarch64-linux
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 360
-    steps:
-      - uses: actions/checkout@v7
+  # build-kernels:
+  #   # Kernel compilations take 1-2 h on free runners.  Run in parallel with
+  #   # build but in a separate job so a kernel failure never blocks other pkgs.
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include:
+  #         - runner: ubuntu-latest
+  #           system: x86_64-linux
+  #         - runner: ubuntu-24.04-arm
+  #           system: aarch64-linux
+  #   runs-on: ${{ matrix.runner }}
+  #   timeout-minutes: 360
+  #   steps:
+  #     - uses: actions/checkout@v7
 
-      - uses: cachix/install-nix-action@v31
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
+  #     - uses: cachix/install-nix-action@v31
+  #       with:
+  #         extra_nix_config: |
+  #           experimental-features = nix-command flakes
 
-      - uses: cachix/cachix-action@v17
-        with:
-          name: awildleon-nixlib
-          authToken: ${{ secrets.CACHIX }}
-          skipPush: true
+  #     - uses: cachix/cachix-action@v17
+  #       with:
+  #         name: awildleon-nixlib
+  #         authToken: ${{ secrets.CACHIX }}
+  #         skipPush: true
 
-      - name: Build kernels for ${{ matrix.system }}
-        env:
-          KERNELS: |
-            linux-lts-router-lhmod
-        run: |
-          # Build ALL outputs (`^*`), not just the default `out`. A kernel
-          # derivation has out/dev/modules; the nixos toplevel needs `-modules`
-          # (and `-dev` for out-of-tree module builds). Pushing only `out`
-          # leaves `-modules` uncached, so every deploy re-runs the whole
-          # kernel derivation to regenerate it — a full recompile. `^*` +
-          # --print-out-paths caches every output so deploys are a pure fetch.
-          #
-          # No separate out-of-tree module step: the only consumer of this
-          # kernel (router.home.core) declares no extraModulePackages and uses
-          # btrfs (no ZFS). Add per-kernel module builds here if/when a host
-          # that runs one of these kernels pulls in ZFS/nvidia/etc.
-          : > paths.txt
-          echo "$KERNELS" | while read -r pkg; do
-            [ -z "$pkg" ] && continue
-            echo "::group::Building $pkg (all outputs)"
-            nix build --print-build-logs --print-out-paths \
-              ".#packages.${{ matrix.system }}.$pkg^*" >> paths.txt || \
-              echo "::warning::$pkg failed to build"
-            echo "::endgroup::"
+  #     - name: Build kernels for ${{ matrix.system }}
+  #       env:
+  #         KERNELS: |
+  #           linux-lts-router-lhmod
+  #       run: |
+  #         # Build ALL outputs (`^*`), not just the default `out`. A kernel
+  #         # derivation has out/dev/modules; the nixos toplevel needs `-modules`
+  #         # (and `-dev` for out-of-tree module builds). Pushing only `out`
+  #         # leaves `-modules` uncached, so every deploy re-runs the whole
+  #         # kernel derivation to regenerate it — a full recompile. `^*` +
+  #         # --print-out-paths caches every output so deploys are a pure fetch.
+  #         #
+  #         # No separate out-of-tree module step: the only consumer of this
+  #         # kernel (router.home.core) declares no extraModulePackages and uses
+  #         # btrfs (no ZFS). Add per-kernel module builds here if/when a host
+  #         # that runs one of these kernels pulls in ZFS/nvidia/etc.
+  #         : > paths.txt
+  #         echo "$KERNELS" | while read -r pkg; do
+  #           [ -z "$pkg" ] && continue
+  #           echo "::group::Building $pkg (all outputs)"
+  #           nix build --print-build-logs --print-out-paths \
+  #             ".#packages.${{ matrix.system }}.$pkg^*" >> paths.txt || \
+  #             echo "::warning::$pkg failed to build"
+  #           echo "::endgroup::"
 
-            # Also cache the kernel's config derivation (linux-config-VERSION).
-            # It's a build-time dep resolved via `.configfile`, not a runtime
-            # reference of the kernel outputs, so `^*` above won't pull it in.
-            # Without it every deploy re-realises the config drv from scratch.
-            echo "::group::Building $pkg configfile"
-            nix build --print-build-logs --print-out-paths \
-              ".#packages.${{ matrix.system }}.$pkg.configfile" >> paths.txt || \
-              echo "::warning::$pkg configfile failed to build"
-            echo "::endgroup::"
-          done
+  #           # Also cache the kernel's config derivation (linux-config-VERSION).
+  #           # It's a build-time dep resolved via `.configfile`, not a runtime
+  #           # reference of the kernel outputs, so `^*` above won't pull it in.
+  #           # Without it every deploy re-realises the config drv from scratch.
+  #           echo "::group::Building $pkg configfile"
+  #           nix build --print-build-logs --print-out-paths \
+  #             ".#packages.${{ matrix.system }}.$pkg.configfile" >> paths.txt || \
+  #             echo "::warning::$pkg configfile failed to build"
+  #           echo "::endgroup::"
+  #         done
 
-      - name: Push kernels to Cachix
-        if: github.event_name != 'pull_request'
-        run: cachix push awildleon-nixlib < paths.txt
+  #     - name: Push kernels to Cachix
+  #       if: github.event_name != 'pull_request'
+  #       run: cachix push awildleon-nixlib < paths.txt
