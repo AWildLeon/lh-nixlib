@@ -1,4 +1,5 @@
 {
+  inputs,
   pkgsUnstable,
   config,
   lh,
@@ -179,7 +180,7 @@ in
     services = {
 
       vaultwarden = {
-        package = pkgsUnstable.vaultwarden-mysql;
+        package = inputs.nixpkgs-master.legacyPackages.${pkgsUnstable.stdenv.system}.vaultwarden-mysql;
         enable = true;
         dbBackend = "mysql";
       }
