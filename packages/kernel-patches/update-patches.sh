@@ -10,13 +10,17 @@ cd "$SCRIPT_DIR"
 
 fetch() {
   local dest="$1" url="$2"
-  local dir; dir="$(dirname "$dest")"
+  local dir
+  dir="$(dirname "$dest")"
   mkdir -p "$dir"
   echo "  → $dest"
   curl -fsSL "$url" -o "$dest"
 }
 
-section() { echo; echo "── $* ──"; }
+section() {
+  echo
+  echo "── $* ──"
+}
 
 # ── zen-sauce (GitHub — stable commit SHAs, never changes) ──────────────────
 # Source: https://github.com/zen-kernel/zen-kernel/commits/6.18/zen-sauce
@@ -28,13 +32,13 @@ ZEN_RAW="https://raw.githubusercontent.com/zen-kernel/zen-kernel/6.18/main"
 
 section "zen-sauce license + patches"
 fetch zen-sauce/COPYING "$ZEN_RAW/COPYING"
-fetch zen-sauce/zen-interactive-base.patch             "$ZEN_BASE/eb977217b0d0ff7df05ff1f8959cfc189e15d3a6.patch"
+fetch zen-sauce/zen-interactive-base.patch "$ZEN_BASE/eb977217b0d0ff7df05ff1f8959cfc189e15d3a6.patch"
 fetch zen-sauce/zen-ahci-disable-staggered-spinup.patch "$ZEN_BASE/081953d744c06eb69253f10c95c08e61814e20eb.patch"
-fetch zen-sauce/zen-kswapd-early-stop.patch            "$ZEN_BASE/c3f4f675371b19a163eff5ccb46915a554421c31.patch"
-fetch zen-sauce/zen-max-map-count.patch                "$ZEN_BASE/4ad8255385967917c640e6db77c0bc586ec6f637.patch"
+fetch zen-sauce/zen-kswapd-early-stop.patch "$ZEN_BASE/c3f4f675371b19a163eff5ccb46915a554421c31.patch"
+fetch zen-sauce/zen-max-map-count.patch "$ZEN_BASE/4ad8255385967917c640e6db77c0bc586ec6f637.patch"
 fetch zen-sauce/zen-kconfig-preempt-rt-no-expert.patch "$ZEN_BASE/85a8f552737fc44b898a19ef15702f2177deed39.patch"
 fetch zen-sauce/zen-mm-disable-watermark-boosting.patch "$ZEN_BASE/a958950c2711ba2fe80e8bcb898bbafadd49b10d.patch"
-fetch zen-sauce/zen-mm-disable-swap-readahead.patch    "$ZEN_BASE/106748e12d5d93aa7ba61b7c914fcfcd0f460d2a.patch"
+fetch zen-sauce/zen-mm-disable-swap-readahead.patch "$ZEN_BASE/106748e12d5d93aa7ba61b7c914fcfcd0f460d2a.patch"
 fetch zen-sauce/zen-interactive-disable-split-lock.patch "$ZEN_BASE/0c87fdcd1f9f7f1a09e8928422160159b8966784.patch"
 
 # ── XanMod (GitLab — pinned to a commit SHA for reproducibility) ─────────────

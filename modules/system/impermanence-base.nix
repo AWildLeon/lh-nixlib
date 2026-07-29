@@ -164,43 +164,49 @@ in
           OnFailureJobMode = "replace-irreversibly";
         };
         serviceConfig.Type = "oneshot";
-        script =
-          ''
-            set -euo pipefail
-            mkdir /btrfs_tmp
-            mount "${btrfsDevice}" /btrfs_tmp
+        script = ''
+          set -euo pipefail
+          mkdir /btrfs_tmp
+          mount "${btrfsDevice}" /btrfs_tmp
 
-            delete_subvolume_recursively() {
-                IFS=$'\n'
-                for i in $(btrfs subvolume list -o "$1" | cut -f 9- -d ' '); do
-                    delete_subvolume_recursively "/btrfs_tmp/$i"
-                done
-                btrfs subvolume delete "$1"
-            }
-            echo "Deleting old root subvolume"
-            delete_subvolume_recursively /btrfs_tmp/${cfgBtrfs.rootSubvolume}
-          ''
-          + lib.optionalString cfg.removeHome ''
-            echo "Recreating home subvolume"
-            delete_subvolume_recursively /btrfs_tmp/${cfgBtrfs.homeSubvolume}_previous || true
-            mv /btrfs_tmp/${cfgBtrfs.homeSubvolume} /btrfs_tmp/${cfgBtrfs.homeSubvolume}_previous
-            btrfs subvolume create /btrfs_tmp/${cfgBtrfs.homeSubvolume}
+          delete_subvolume_recursively() {
+              IFS=$'\n'
+              for i in $(btrfs subvolume list -o "$1" | cut -f 9- -d ' '); do
+                  delete_subvolume_recursively "/btrfs_tmp/$i"
+              done
+              btrfs subvolume delete "$1"
+          }
+          echo "Deleting old root subvolume"
+          delete_subvolume_recursively /btrfs_tmp/${cfgBtrfs.rootSubvolume}
+        ''
+        + lib.optionalString cfg.removeHome ''
+          echo "Recreating home subvolume"
+          delete_subvolume_recursively /btrfs_tmp/${cfgBtrfs.homeSubvolume}_previous || true
+          mv /btrfs_tmp/${cfgBtrfs.homeSubvolume} /btrfs_tmp/${cfgBtrfs.homeSubvolume}_previous
+          btrfs subvolume create /btrfs_tmp/${cfgBtrfs.homeSubvolume}
 
-            # Recreate home subfolder for each user with proper permissions
-            ${lib.concatMapStrings (u: ''
+          # Recreate home subfolder for each user with proper permissions
+          ${lib.concatMapStrings
+            (u: ''
               mkdir -p /btrfs_tmp/${cfgBtrfs.homeSubvolume}/${lib.removePrefix "/home/" u.home}
               chown ${toString u.uid}:${
                 toString config.users.groups.${u.group}.gid
               } /btrfs_tmp/${cfgBtrfs.homeSubvolume}/${lib.removePrefix "/home/" u.home}
               chmod ${u.homeMode} /btrfs_tmp/${cfgBtrfs.homeSubvolume}/${lib.removePrefix "/home/" u.home}
-            '') (lib.filter (u: u.createHome && lib.hasPrefix "/home/" u.home && u.uid != null) (lib.attrValues config.users.users))}
-          ''
-          + ''
-            echo "Recreating root subvolume"
-            btrfs subvolume create /btrfs_tmp/${cfgBtrfs.rootSubvolume}
+            '')
+            (
+              lib.filter (u: u.createHome && lib.hasPrefix "/home/" u.home && u.uid != null) (
+                lib.attrValues config.users.users
+              )
+            )
+          }
+        ''
+        + ''
+          echo "Recreating root subvolume"
+          btrfs subvolume create /btrfs_tmp/${cfgBtrfs.rootSubvolume}
 
-            umount /btrfs_tmp
-          '';
+          umount /btrfs_tmp
+        '';
       };
     })
 

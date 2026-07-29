@@ -6,7 +6,7 @@
   maintainers,
 }:
 
-stdenvNoCC.mkDerivation (finalAttrs: {
+stdenvNoCC.mkDerivation (_finalAttrs: {
   pname = "dashboard-icons";
   version = "0-unstable-2026-06-12";
 

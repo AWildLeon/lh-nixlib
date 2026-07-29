@@ -1,7 +1,5 @@
 # Allocations
 
-
-
 | UID  | GID  | Port              | Service      |
 | ---- | ---- | ----------------- | ------------ |
 | NULL | NULL | 3000              | Grafana      |
