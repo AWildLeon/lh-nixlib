@@ -3,13 +3,14 @@ name: Build and push to my private attic server
 # The Attic Cache used is private
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - flake.nix
-      - flake.lock
-      - ci/cache-bundle.nix
-      - .github/workflows/private_build.yml
+  # Disabled as Cache server is broken
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - flake.nix
+  #     - flake.lock
+  #     - ci/cache-bundle.nix
+  #     - .github/workflows/private_build.yml
   workflow_dispatch:
 
 permissions:
