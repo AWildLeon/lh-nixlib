@@ -10,6 +10,9 @@
       enable = true;
       execWheelOnly = true;
       wheelNeedsPassword = true;
+      extraConfig = ''
+        Defaults lecture = never
+      '';
     };
     environment.defaultPackages = lib.mkForce [ ];
     systemd.coredump.enable = lib.mkDefault false;
