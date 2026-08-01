@@ -22,7 +22,7 @@
           {
             name = "Options";
             modules = [
-              self.nixosModule.default
+              self.nixosModules.default
             ];
             inherit urlPrefix;
             specialArgs = {

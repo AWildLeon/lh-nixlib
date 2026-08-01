@@ -7,7 +7,7 @@
       ./profiles/part.nix
     ];
 
-    nixosModule.default =
+    nixosModules.default =
       { lib, ... }:
       {
         # Expose lh-nixlib's lib helpers (e.g. mkJailTmpfiles) to all modules

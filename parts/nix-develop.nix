@@ -5,7 +5,7 @@ _: {
       devShells.default = pkgs.mkShell {
         buildInputs = with pkgs; [
           nixd
-          nixfmt-rfc-style
+          nixfmt
           ripgrep
           pkgsUnstable.mcp-nixos
         ];
