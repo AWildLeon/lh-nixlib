@@ -5,11 +5,14 @@ name: Promote release
 # and be guaranteed every derivation is already in the public cache instead
 # of racing an in-flight build on `main`.
 #
-# Triggers on completion of the public "Build and push to Cachix" workflow
-# (build.yml). The private attic build and the pages deploy are intentionally
-# not gated on — only the public Cachix build decides a commit is releasable.
+# Build-relevant pushes are promoted after the public "Build and push to Cachix"
+# workflow (build.yml) succeeds. Pushes that do not trigger that path-filtered
+# workflow are promoted directly. The private attic build and pages deploy are
+# intentionally not gates.
 
 on:
+  push:
+    branches: [main]
   workflow_run:
     workflows: ["Build and push to Cachix"]
     types: [completed]
@@ -25,22 +28,75 @@ concurrency:
 
 jobs:
   promote:
-    # Only promote a green build of main. workflow_run also fires for PR and
-    # dispatch runs; head_branch == main filters those out.
+    # A main push is handled directly when it does not need a Cachix build.
+    # workflow_run also fires for PR and dispatch runs, so restrict that path
+    # to successful push builds of main.
     if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main'
+      github.event_name == 'push' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
 
-      - name: Push release to built commit if newer
+      - name: Select safely promotable commit
+        id: candidate
         env:
-          BUILT_SHA: ${{ github.event.workflow_run.head_sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          BUILT_SHA: ${{ github.sha }}
+          WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          # Keep this list in sync with build.yml's push.paths. If any of these
+          # files changed, build.yml must succeed before they can be promoted.
+          build_paths=(
+            packages lib maintainers flake.nix flake.lock
+            .github/workflows/build.yml
+          )
+
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          git fetch --no-tags origin \
+            +refs/heads/release:refs/remotes/origin/release || true
+
+          if [ "$EVENT_NAME" = "push" ]; then
+            if ! release_sha="$(git rev-parse --verify refs/remotes/origin/release)"; then
+              echo "No release branch exists; waiting for a successful build to seed it."
+              echo "promote=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            # Compare with the released tree, not merely the previous main
+            # commit. This prevents a non-build push from overtaking an older
+            # cache-relevant commit whose build is still running.
+            if ! git diff --quiet "$release_sha" "$BUILT_SHA" -- "${build_paths[@]}"; then
+              echo "Unreleased Cachix-relevant changes exist; waiting for their build workflow."
+              echo "promote=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            candidate_sha="$BUILT_SHA"
+          else
+            candidate_sha="$WORKFLOW_RUN_SHA"
+            main_sha="$(git rev-parse refs/remotes/origin/main)"
+
+            # A successful build may be followed by commits that do not need a
+            # build of their own. Include them so they are not stranded after
+            # their direct promotion correctly waited for this build.
+            if git diff --quiet "$WORKFLOW_RUN_SHA" "$main_sha" -- "${build_paths[@]}"; then
+              candidate_sha="$main_sha"
+            fi
+          fi
+
+          echo "promote=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$candidate_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Push release to built commit if newer
+        if: steps.candidate.outputs.promote == 'true'
+        env:
+          BUILT_SHA: ${{ steps.candidate.outputs.sha }}
         run: |
           git fetch --no-tags origin +refs/heads/release:refs/remotes/origin/release || true
 
