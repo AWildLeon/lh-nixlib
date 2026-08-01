@@ -22,6 +22,7 @@ in
       default = true;
       description = "Whether to enable ACME support for Nginx, Please lookup the Subscriber Agreement before enabling this";
     };
+    fail2banBotsearch.enable = lib.mkEnableOption "the Fail2ban Nginx bot-search jail";
     ReadOnlyPaths = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];
@@ -55,8 +56,22 @@ in
 
         # Minimize information leaked to other domains
         add_header 'Referrer-Policy' 'origin-when-cross-origin';
+      ''
+      + lib.optionalString (config.lh.security.fail2ban.enable && cfg.fail2banBotsearch.enable) ''
+
+        # The bundled nginx-botsearch filter reads the systemd journal.
+        access_log /dev/stdout combined;
       '';
     };
+
+    services.fail2ban.jails.nginx-botsearch =
+      lib.mkIf (config.lh.security.fail2ban.enable && cfg.fail2banBotsearch.enable)
+        {
+          settings = {
+            backend = "systemd";
+            port = "http,https";
+          };
+        };
 
     networking.firewall.allowedTCPPorts = [
       80 # HTTP

@@ -64,6 +64,23 @@ in
       };
     };
 
+    services.fail2ban.jails.gotify = lib.mkIf config.lh.security.fail2ban.enable {
+      filter = {
+        INCLUDES.before = "common.conf";
+        Definition = {
+          failregex = ''
+            ^.*\|\s+401\s+\|\s+[^|]+\|\s+<ADDR>\s+\|.*$
+          '';
+          ignoreregex = "";
+          journalmatch = "_SYSTEMD_UNIT=gotify-server.service";
+        };
+      };
+      settings = {
+        backend = "systemd";
+        port = "http,https";
+      };
+    };
+
     lh.services.traefik.dynamicConfig = lib.mkIf cfg.traefikIntegration.enable {
       http.routers.gotify = {
         rule = "Host(`${cfg.domain}`)";

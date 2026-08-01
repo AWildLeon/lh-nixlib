@@ -268,6 +268,26 @@
           mailerPasswordFile = config.lh.services.gitea.mailer.passwordFile;
         };
 
+        services.fail2ban.jails.gitea = lib.mkIf config.lh.security.fail2ban.enable {
+          filter = {
+            Definition = {
+              failregex = ''
+                ^.*(?:Failed authentication attempt|invalid credentials|Attempted access of unknown user).* from <HOST>\s*$
+              '';
+              ignoreregex = "";
+              journalmatch = "_SYSTEMD_UNIT=gitea.service";
+            };
+          };
+          settings = {
+            backend = "systemd";
+            port = "http,https,${toString config.lh.services.gitea.sshPort}";
+            maxretry = 10;
+            findtime = 3600;
+            bantime = 900;
+            banaction = "%(banaction_allports)s";
+          };
+        };
+
         # Hardening with jailing system
         systemd = {
           services = {

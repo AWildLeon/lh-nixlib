@@ -9,6 +9,29 @@
 with lib;
 let
   cfg = config.lh.services.vaultwarden;
+  mkFail2banJail =
+    {
+      failregex,
+      allports ? false,
+    }:
+    {
+      filter = {
+        INCLUDES.before = "common.conf";
+        Definition = {
+          inherit failregex;
+          ignoreregex = "";
+          journalmatch = "_SYSTEMD_UNIT=vaultwarden.service";
+        };
+      };
+      settings = {
+        backend = "systemd";
+        port = "http,https";
+        maxretry = 3;
+        bantime = 14400;
+        findtime = 14400;
+      }
+      // optionalAttrs allports { banaction = "%(banaction_allports)s"; };
+    };
 in
 {
   options.lh.services.vaultwarden = {
@@ -215,6 +238,25 @@ in
         })
         // (optionalAttrs cfg.smtp.ssl { SMTP_SSL = cfg.smtp.ssl; });
         webVaultPackage = pkgsUnstable.vaultwarden.webvault;
+      };
+      fail2ban.jails = mkIf config.lh.security.fail2ban.enable {
+        vaultwarden = mkFail2banJail {
+          allports = true;
+          failregex = ''
+            ^.*?Username or password is incorrect\. Try again\. IP: <ADDR>\. Username:.*$
+          '';
+        };
+        vaultwarden-admin = mkFail2banJail {
+          allports = true;
+          failregex = ''
+            ^.*Invalid admin token\. IP: <ADDR>.*$
+          '';
+        };
+        vaultwarden-totp = mkFail2banJail {
+          failregex = ''
+            ^.*\[ERROR\] Invalid TOTP code! Server time: (.*) UTC IP: <ADDR>$
+          '';
+        };
       };
       traefik.dynamicConfigOptions.http = mkIf cfg.traefikIntegration.enable {
         services.vaultwarden = {
