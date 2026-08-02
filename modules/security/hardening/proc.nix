@@ -8,22 +8,27 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    fileSystems."/proc" = {
-      fsType = "proc";
-      device = "proc";
-      options = [
-        "nosuid"
-        "nodev"
-        "noexec"
-        "hidepid=2"
-      ];
-      neededForBoot = true;
+    fileSystems = {
+      "/proc" = {
+        fsType = "proc";
+        device = "proc";
+        options = [
+          "nosuid"
+          "nodev"
+          "noexec"
+          "hidepid=2"
+          "gid=${toString config.users.groups.proc.gid}"
+        ];
+        neededForBoot = true;
+      };
     };
 
     # Allow only root for /proc
-    users.groups.proc = { };
-    systemd.services.systemd-logind.serviceConfig = {
-      SupplementaryGroups = [ "proc" ];
+    users.groups.proc.gid = 500;
+
+    systemd.services = {
+      systemd-logind.serviceConfig.SupplementaryGroups = [ "proc" ];
+      "user@".serviceConfig.SupplementaryGroups = [ "proc" ];
     };
   };
 
