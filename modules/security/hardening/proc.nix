@@ -29,6 +29,9 @@ in
     systemd.services = {
       systemd-logind.serviceConfig.SupplementaryGroups = [ "proc" ];
       "user@".serviceConfig.SupplementaryGroups = [ "proc" ];
+    }
+    // lib.mkIf config.security.polkit.enable {
+      polkit.serviceConfig.SupplementaryGroups = [ "proc" ];
     };
   };
 
