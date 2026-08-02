@@ -43,7 +43,6 @@
     # Disable conflicting DNS services
     services = {
       resolved.enable = false;
-      nscd.enableNsncd = false;
       unbound = {
         enable = true;
         resolveLocalQueries = false; # Disable local resolution to avoid conflicts with DNSdist
