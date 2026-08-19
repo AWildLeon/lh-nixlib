@@ -1,4 +1,8 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  ...
+}:
 
 with lib;
 
@@ -22,12 +26,16 @@ in
     };
   };
 
+  # .link rather than a udev NAME= rule: NAME= only applies on `add`, so a
+  # mapping deployed after the interface exists would not take effect until the
+  # next boot. 10- sorts ahead of systemd's 99-default.link.
   config = mkIf (cfg.interfaces != { }) {
-    services.udev.extraRules = concatStringsSep "\n" (
-      mapAttrsToList (
-        mac: name:
-        ''SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="${mac}", NAME="${name}"''
-      ) cfg.interfaces
-    );
+    systemd.network.links = mapAttrs' (
+      mac: name:
+      nameValuePair "10-lh-${name}" {
+        matchConfig.MACAddress = mac;
+        linkConfig.Name = name;
+      }
+    ) cfg.interfaces;
   };
 }
