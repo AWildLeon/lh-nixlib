@@ -62,11 +62,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786848141,
-        "narHash": "sha256-9PXE9azbZS83CpJgGUl7TtNljvF2gJjDXloUl/+uxkc=",
+        "lastModified": 1787449388,
+        "narHash": "sha256-QeZCq/1ZQ1nwIOL6GXjHu/rVOyxUNdT3qs2SBUCYTNc=",
         "owner": "AWildLeon",
         "repo": "Glance-iCal-Events",
-        "rev": "b63ccde290d2b8e86f49b91a862d9b3537d98881",
+        "rev": "4afa5d960a59708d9efc3780b1b77f0a8e7898fc",
         "type": "github"
       },
       "original": {
