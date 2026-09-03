@@ -62,11 +62,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787575185,
-        "narHash": "sha256-QeZCq/1ZQ1nwIOL6GXjHu/rVOyxUNdT3qs2SBUCYTNc=",
+        "lastModified": 1788054210,
+        "narHash": "sha256-l2KTkJmnr+DHK1tR0lC0/Q83Ovm/2IAiTGBr/DJbgWQ=",
         "owner": "AWildLeon",
         "repo": "Glance-iCal-Events",
-        "rev": "ab30c325a29d23a315e6ae939852bfb3c7ae84e0",
+        "rev": "002885b888403687139aff0f07eb5cd3d1b6b066",
         "type": "github"
       },
       "original": {
@@ -140,11 +140,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1787962033,
-        "narHash": "sha256-u6z9VTZA4Kf3RkHQo9sQI7NI4Ei/uiU9vrMqOiwWP1Y=",
+        "lastModified": 1788187754,
+        "narHash": "sha256-bu1QxmXKmPuvBLN7bHP355OV9Qo13x9WCiRDH62CqRM=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c5c4a43b0e8056328ec4529f735cabdb8f1942bb",
+        "rev": "5dfba6236110080a54247d6460bc2ff5dda939cc",
         "type": "github"
       },
       "original": {
