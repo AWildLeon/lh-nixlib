@@ -62,11 +62,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790473380,
+        "lastModified": 1790617307,
         "narHash": "sha256-R0VhckKg2ga9Wa3/edt0qX3xWyFMDjSslzHU4GmJfyI=",
         "owner": "AWildLeon",
         "repo": "Glance-iCal-Events",
-        "rev": "9462d4af4c6179f54d0224bd59bf350e492eb48a",
+        "rev": "9929371ca6ae3705f9a4ef654e444388cf9e5184",
         "type": "github"
       },
       "original": {
@@ -124,11 +124,11 @@
     },
     "nixos-unstable": {
       "locked": {
-        "lastModified": 1790570722,
-        "narHash": "sha256-Avcz96Q+8OkfUIUXipBBVsQn19L622BtKP7mk6M+uls=",
+        "lastModified": 1790600678,
+        "narHash": "sha256-6k3n7X2UsZ6tAlWTz99RimiZab+17tMUrw9sRUcELiA=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "419fe0f449b3fbe3bdd53d9840288db4509ec32e",
+        "rev": "f45c6f04c2f013f004bf94e284e95d72898d9393",
         "type": "github"
       },
       "original": {
