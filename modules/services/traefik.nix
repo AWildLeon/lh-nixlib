@@ -11,6 +11,16 @@ with lib;
 let
 
   cfg = config.lh.services.traefik;
+
+  rejectEncodedCharacters = {
+    allowEncodedSlash = false;
+    allowEncodedBackSlash = false;
+    allowEncodedNullCharacter = false;
+    allowEncodedSemicolon = false;
+    allowEncodedPercent = false;
+    allowEncodedQuestionMark = false;
+    allowEncodedHash = false;
+  };
   # Pick the container runtime socket automatically
   socketPath =
     if config.virtualisation.podman.enable then "/run/podman/podman.sock" else "/var/run/docker.sock";
@@ -215,6 +225,11 @@ in
               # it as the X-Auth-User traefik manages (traefik warns about this
               # on every start). "delete" drops such headers silently.
               #
+              # encodedCharacters: since v3.6.7 traefik forwards %2F, %5C, %00, %3B,
+              # %25, %3F and %23 in the path by default, which opens a split-view
+              # with backends that are not strictly RFC 3986 (and warns on every
+              # start). Rejecting them restores the pre-3.6.7 behaviour.
+              #
               # additionalEntrypoints is merged over these defaults rather than
               # replacing them, so an override of websecure keeps the rest.
               entryPoints = recursiveUpdate {
@@ -228,6 +243,7 @@ in
                       };
                     };
                     aliasHeadersStrategy = "delete";
+                    encodedCharacters = rejectEncodedCharacters;
                   };
                 };
                 websecure = {
@@ -236,6 +252,7 @@ in
                     maxConcurrentStreams = 1000;
                   };
                   http.aliasHeadersStrategy = "delete";
+                  http.encodedCharacters = rejectEncodedCharacters;
                   reusePort = true;
                 };
               } cfg.additionalEntrypoints;
