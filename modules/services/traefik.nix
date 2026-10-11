@@ -210,7 +210,14 @@ in
                 dashboard = true;
               };
 
-              entryPoints = {
+              # aliasHeadersStrategy: without it a client can send X_Auth_User or
+              # X.Auth.User and have a backend that normalises header names read
+              # it as the X-Auth-User traefik manages (traefik warns about this
+              # on every start). "delete" drops such headers silently.
+              #
+              # additionalEntrypoints is merged over these defaults rather than
+              # replacing them, so an override of websecure keeps the rest.
+              entryPoints = recursiveUpdate {
                 web = {
                   address = ":80";
                   http = {
@@ -220,6 +227,7 @@ in
                         scheme = "https";
                       };
                     };
+                    aliasHeadersStrategy = "delete";
                   };
                 };
                 websecure = {
@@ -227,10 +235,10 @@ in
                   http2 = {
                     maxConcurrentStreams = 1000;
                   };
+                  http.aliasHeadersStrategy = "delete";
                   reusePort = true;
                 };
-              }
-              // cfg.additionalEntrypoints;
+              } cfg.additionalEntrypoints;
 
               certificatesResolvers = mkIf (cfg.cert_resolvers != { }) cfg.cert_resolvers;
 
