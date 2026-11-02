@@ -11,13 +11,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "accel-ppp";
-  version = "1.14.0";
+  version = "1.15.0";
 
   src = fetchFromGitHub {
     owner = "accel-ppp";
     repo = "accel-ppp";
     tag = finalAttrs.version;
-    hash = "sha256-7MamSIXix6eGocJep1ihK//yRfJ9e3kLzMZV7I5DFQc=";
+    hash = "sha256-GnskcX5KiJ1jvh5yyvT1kyHEVWxnEBtec/KRnhAsMro=";
   };
 
   # drop the top-level CMakeLists.txt rule that installs straight to the
