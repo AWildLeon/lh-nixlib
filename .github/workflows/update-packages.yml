@@ -42,6 +42,8 @@ jobs:
           done
 
       - name: Open pull request
+        id: create-pr
+        continue-on-error: true
         uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "packages: automated update"
@@ -52,3 +54,9 @@ jobs:
             and source-layout changes) before merging.
           branch: auto-update/packages
           delete-branch: true
+
+      - name: Warn when pull request creation is unavailable
+        if: steps.create-pr.outcome == 'failure'
+        run: |
+          echo "::warning::Could not create/update PR with GITHUB_TOKEN."
+          echo "::warning::Enable 'Allow GitHub Actions to create and approve pull requests' in repository settings, or provide a token with pull request permissions."
