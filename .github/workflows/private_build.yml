@@ -51,7 +51,7 @@ jobs:
             netrc-file = ${{ runner.temp }}/nix_netrc
 
       - name: Setup Attic cache
-        uses: ryanccn/attic-action@v0.5.0
+        uses: ryanccn/attic-action@v0.5.2
         with:
           endpoint: https://${{ secrets.ATTIC_ENDPOINT }}
           cache: ${{ secrets.ATTIC_CACHE }}
