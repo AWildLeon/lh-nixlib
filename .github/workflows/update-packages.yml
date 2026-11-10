@@ -2,7 +2,7 @@ name: Update packages
 
 # Runs nix-update against the packages that carry a passthru.updateScript
 # and opens a PR with whatever changed. Packages without an updateScript
-# (traefik, glance: track nixpkgs directly; kernels: version comes from the
+# (traefik: tracks nixpkgs directly; kernels: version comes from the
 # nixpkgs pin, not upstream; remotedesktopmanager: no autodetectable release
 # feed, bump manually) are intentionally left out of this list.
 

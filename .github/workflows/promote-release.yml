@@ -7,8 +7,7 @@ name: Promote release
 #
 # Build-relevant pushes are promoted after the public "Build and push to Cachix"
 # workflow (build.yml) succeeds. Pushes that do not trigger that path-filtered
-# workflow are promoted directly. The private attic build and pages deploy are
-# intentionally not gates.
+# workflow are promoted directly. The pages deploy is intentionally not a gate.
 
 on:
   push:

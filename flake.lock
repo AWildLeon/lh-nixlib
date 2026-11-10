@@ -191,11 +191,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790311603,
-        "narHash": "sha256-05Mocg7MgsBNF3PLyloUg7C9uCEvlwHRaPk2o5JHkL8=",
+        "lastModified": 1794324014,
+        "narHash": "sha256-ZHFAtrXrHKiL2fIrM6MLEUPK3Fp9y07BX9R+vqusqD0=",
         "owner": "chayleaf",
         "repo": "notnft",
-        "rev": "b453dcfb38d03d4632f42e4bb7ec1803f3ae34ec",
+        "rev": "68cc53c4ba2921f4a178cb57bd70cffba9c7fe0b",
         "type": "github"
       },
       "original": {
@@ -206,7 +206,7 @@
     },
     "nuschtosSearch": {
       "inputs": {
-        "flake-utils": "flake-utils_2",
+        "flake-utils": "flake-utils",
         "ixx": "ixx",
         "nix-index-database": "nix-index-database",
         "nixpkgs": [
@@ -230,7 +230,6 @@
     "root": {
       "inputs": {
         "flake-parts": "flake-parts",
-        "glance-ical-events": "glance-ical-events",
         "nixos-unstable": "nixos-unstable",
         "nixpkgs": "nixpkgs",
         "nixpkgs-master": "nixpkgs-master",
@@ -240,21 +239,6 @@
       }
     },
     "systems": {
-      "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default",
-        "type": "github"
-      }
-    },
-    "systems_2": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",

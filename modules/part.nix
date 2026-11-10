@@ -21,9 +21,6 @@
         _module.args."inputs-lhnixlib" = inputs;
 
         imports = [
-          # External (Own) modules whose options lh-nixlib's services rely on.
-          inputs.glance-ical-events.nixosModules.default
-
           ./cosmetic
           ./hardware
           ./networking

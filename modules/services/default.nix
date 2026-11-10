@@ -4,7 +4,6 @@
     ./databases/mysql.nix
     ./databases/postgres.nix
     ./gitea.nix
-    ./glanceapp.nix
     ./gotify.nix
     ./grafana.nix
     ./nameserver.nix
