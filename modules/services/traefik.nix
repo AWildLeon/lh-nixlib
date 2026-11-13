@@ -132,8 +132,10 @@ in
         inherit (TraefikFormat) type;
         default = { };
         description = ''
-          Additional entry points to define for Traefik.
-          Each entry point should be defined as an attribute set with the necessary configuration.
+          Entry points to add to Traefik, or settings to add to the default
+          `web` (:80) and `websecure` (:443) ones. Merged recursively into the
+          defaults, so `websecure.http.encodedCharacters` keeps `websecure`'s
+          address, http2 and reusePort.
         '';
       };
 
@@ -210,7 +212,11 @@ in
                 dashboard = true;
               };
 
-              entryPoints = {
+              # Merged recursively: a host adding one setting to `websecure`
+              # (gitea's encodedCharacters) must not drop its address. A plain
+              # `//` replaced the whole entry point, so websecure lost ":443"
+              # and Traefik had no HTTPS listener.
+              entryPoints = recursiveUpdate {
                 web = {
                   address = ":80";
                   http = {
@@ -229,8 +235,7 @@ in
                   };
                   reusePort = true;
                 };
-              }
-              // cfg.additionalEntrypoints;
+              } cfg.additionalEntrypoints;
 
               certificatesResolvers = mkIf (cfg.cert_resolvers != { }) cfg.cert_resolvers;
 
