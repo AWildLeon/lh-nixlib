@@ -220,6 +220,15 @@ in
                 web = {
                   address = ":80";
                   http = {
+                    # Request headers whose name aliases another one
+                    # (X_Auth_User, X.Auth.User for X-Auth-User) are dropped
+                    # before routing: CGI/PHP/WSGI backends read them as the
+                    # header they alias, so a client could spoof the headers
+                    # Traefik or a forwardAuth (Authentik) sets. Traefik 3.7
+                    # warns on every entry point without it. Per entry point,
+                    # not per router; a host overrides it through
+                    # additionalEntrypoints.<name>.http.aliasHeadersStrategy.
+                    aliasHeadersStrategy = "delete";
                     redirections = {
                       entryPoint = {
                         to = "websecure";
@@ -230,6 +239,8 @@ in
                 };
                 websecure = {
                   address = ":443";
+                  # See web above.
+                  http.aliasHeadersStrategy = "delete";
                   http2 = {
                     maxConcurrentStreams = 1000;
                   };
