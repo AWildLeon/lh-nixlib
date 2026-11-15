@@ -130,21 +130,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-master": {
-      "locked": {
-        "lastModified": 1794331739,
-        "narHash": "sha256-XgLXcY2PoMdAm7bvq7ZzfCg2fLOimejz07LWE7/FN3M=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "26770607e42877e8fb8cb5f66409209ac4363c83",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "notnft": {
       "inputs": {
         "nixpkgs": [
@@ -193,7 +178,6 @@
         "flake-parts": "flake-parts",
         "nixos-unstable": "nixos-unstable",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-master": "nixpkgs-master",
         "notnft": "notnft",
         "nuschtosSearch": "nuschtosSearch",
         "treefmt-nix": "treefmt-nix"

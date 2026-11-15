@@ -1,5 +1,4 @@
 {
-  inputs-lhnixlib,
   pkgsUnstable,
   config,
   lh,
@@ -203,11 +202,8 @@ in
     services = {
 
       vaultwarden = {
-        package =
-          pkgsUnstable.callPackage "${inputs-lhnixlib.nixpkgs-master}/pkgs/by-name/va/vaultwarden/package.nix"
-            {
-              dbBackend = "mysql";
-            };
+        # nixpkgs' own mysql flavour: Hydra-cached, unlike an override.
+        package = pkgsUnstable.vaultwarden-mysql;
         enable = true;
         dbBackend = "mysql";
       }

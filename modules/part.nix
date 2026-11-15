@@ -14,7 +14,7 @@
         # as the `lh.lib` module argument, mirroring the flake-parts wiring.
         _module.args.lh.lib = import ../lib { inherit lib; };
 
-        # Expose lh-nixlib's OWN flake inputs (e.g. nixpkgs-master) to all
+        # Expose lh-nixlib's OWN flake inputs to all
         # modules under a distinct name. The plain `inputs` arg is the
         # *consumer's* inputs (passed via specialArgs) and would shadow anything
         # we set here, so it cannot be relied on to carry lh-nixlib's inputs.
